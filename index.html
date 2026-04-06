@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduTrust AI — Higher Education Outcome Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0c0e14;
+  --ink2:#1e2230;
+  --ink3:#2d3348;
+  --mist:#f4f5f8;
+  --mist2:#eaecf2;
+  --mist3:#dde0ea;
+  --text:#0c0e14;
+  --text2:#4a5168;
+  --text3:#8a90a8;
+  --accent:#1a56ff;
+  --accent2:#3d72ff;
+  --accentLight:#e8eeff;
+  --green:#00b86b;
+  --greenLight:#e0f7ee;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --gold:#d4a853;
+  --serif:'Instrument Serif',serif;
+  --sans:'Geist',sans-serif;
+  --mono:'Geist Mono',monospace;
+  --r:10px;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--ink);color:#fff;min-height:100vh;overflow-x:hidden}
+
+/* Animated bg */
+.bg-field{position:fixed;inset:0;z-index:0;overflow:hidden}
+.bg-field::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 20% 20%, rgba(26,86,255,0.18) 0%, transparent 60%),
+             radial-gradient(ellipse 60% 80% at 80% 80%, rgba(0,184,107,0.1) 0%, transparent 60%),
+             radial-gradient(ellipse 40% 40% at 50% 50%, rgba(212,168,83,0.06) 0%, transparent 70%);
+}
+.grid-lines{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+.orb{
+  position:absolute;border-radius:50%;filter:blur(80px);
+  animation:drift 8s ease-in-out infinite alternate;
+}
+.orb1{width:400px;height:400px;background:rgba(26,86,255,0.15);top:-100px;left:-100px}
+.orb2{width:300px;height:300px;background:rgba(0,184,107,0.1);bottom:-50px;right:-50px;animation-delay:-4s}
+@keyframes drift{0%{transform:translate(0,0)}100%{transform:translate(30px,20px)}}
+
+/* NAV */
+nav{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:20px 48px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+.logo-text{font-family:var(--serif);font-size:20px;color:#fff}
+.logo-text span{color:rgba(255,255,255,0.4)}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-size:14px;color:rgba(255,255,255,0.5);text-decoration:none;transition:color 0.2s}
+.nav-links a:hover{color:#fff}
+.nav-cta{display:flex;gap:10px}
+
+/* BTNs */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all 0.2s;text-decoration:none}
+.btn-ghost{background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(255,255,255,0.1)}
+.btn-ghost:hover{background:rgba(255,255,255,0.1)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-lg{padding:14px 32px;font-size:15px;border-radius:10px}
+.btn-xl{padding:16px 40px;font-size:16px;border-radius:12px;font-weight:600}
+
+/* HERO */
+.hero{position:relative;z-index:5;text-align:center;padding:100px 24px 80px}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:20px;
+  background:rgba(26,86,255,0.12);border:1px solid rgba(26,86,255,0.25);
+  font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:28px;
+  letter-spacing:0.08em;text-transform:uppercase;
+}
+.pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+
+.hero h1{
+  font-family:var(--serif);font-size:clamp(42px,6vw,76px);
+  line-height:1.08;letter-spacing:-0.02em;
+  color:#fff;max-width:900px;margin:0 auto 20px;
+}
+.hero h1 em{font-style:italic;color:rgba(255,255,255,0.5)}
+.hero p{font-size:17px;color:rgba(255,255,255,0.5);max-width:560px;margin:0 auto 40px;line-height:1.7}
+.hero-actions{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.hero-note{font-size:12px;color:rgba(255,255,255,0.3);margin-top:14px}
+
+/* STATS */
+.stats-bar{
+  position:relative;z-index:5;
+  display:flex;justify-content:center;gap:0;
+  max-width:800px;margin:0 auto 80px;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;overflow:hidden;
+}
+.stat{flex:1;padding:24px;text-align:center;border-right:1px solid rgba(255,255,255,0.06)}
+.stat:last-child{border-right:none}
+.stat-num{font-family:var(--serif);font-size:32px;color:#fff;margin-bottom:4px}
+.stat-lbl{font-size:12px;color:rgba(255,255,255,0.4)}
+
+/* FEATURES */
+.features{position:relative;z-index:5;max-width:1100px;margin:0 auto 80px;padding:0 24px}
+.section-label{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent2);margin-bottom:12px}
+.section-title{font-family:var(--serif);font-size:clamp(30px,4vw,46px);color:#fff;margin-bottom:16px;line-height:1.15}
+.section-sub{font-size:16px;color:rgba(255,255,255,0.45);max-width:500px;line-height:1.7;margin-bottom:48px}
+
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feat-card{
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+  border-radius:16px;padding:28px;
+  transition:all 0.3s;position:relative;overflow:hidden;
+}
+.feat-card:hover{background:rgba(255,255,255,0.06);border-color:rgba(26,86,255,0.3);transform:translateY(-3px)}
+.feat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(26,86,255,0.5),transparent);opacity:0;transition:opacity 0.3s}
+.feat-card:hover::before{opacity:1}
+.feat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:16px}
+.feat-icon.blue{background:rgba(26,86,255,0.15)}
+.feat-icon.green{background:rgba(0,184,107,0.12)}
+.feat-icon.gold{background:rgba(212,168,83,0.12)}
+.feat-title{font-size:16px;font-weight:600;color:#fff;margin-bottom:8px}
+.feat-desc{font-size:13px;color:rgba(255,255,255,0.45);line-height:1.7}
+
+/* LOGIN MODAL */
+.modal-overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:all 0.3s;
+}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{
+  background:#14181f;border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px;padding:40px;width:100%;max-width:440px;
+  transform:translateY(20px) scale(0.97);transition:transform 0.3s;
+}
+.modal-overlay.open .modal{transform:translateY(0) scale(1)}
+.modal-logo{text-align:center;margin-bottom:28px}
+.modal-logo .logo-mark{margin:0 auto 10px;width:44px;height:44px;font-size:18px}
+.modal h2{font-family:var(--serif);font-size:28px;color:#fff;text-align:center;margin-bottom:6px}
+.modal p{font-size:13px;color:rgba(255,255,255,0.4);text-align:center;margin-bottom:28px}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase}
+.form-input{
+  width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px;padding:12px 14px;font-family:var(--sans);font-size:14px;
+  color:#fff;outline:none;transition:border-color 0.2s;
+}
+.form-input:focus{border-color:rgba(26,86,255,0.6);background:rgba(26,86,255,0.06)}
+.form-input::placeholder{color:rgba(255,255,255,0.2)}
+.modal-footer{text-align:center;margin-top:16px;font-size:12px;color:rgba(255,255,255,0.3)}
+.modal-footer a{color:var(--accent2);text-decoration:none}
+.role-select{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.role-opt{
+  padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);
+  background:transparent;color:rgba(255,255,255,0.5);font-size:12px;
+  cursor:pointer;text-align:center;transition:all 0.2s;font-family:var(--sans);
+}
+.role-opt.selected{border-color:var(--accent);background:rgba(26,86,255,0.12);color:#fff}
+.error-msg{font-size:12px;color:#ff6b84;margin-top:6px;display:none}
+
+/* FOOTER */
+footer{position:relative;z-index:5;text-align:center;padding:40px;border-top:1px solid rgba(255,255,255,0.06)}
+footer p{font-size:12px;color:rgba(255,255,255,0.2)}
+
+/* DEMO PREVIEW */
+.preview-section{position:relative;z-index:5;max-width:1100px;margin:0 auto 80px;padding:0 24px}
+.preview-frame{
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+  border-radius:20px;overflow:hidden;
+}
+.preview-topbar{
+  background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.06);
+  padding:12px 16px;display:flex;align-items:center;gap:8px;
+}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+.preview-content{padding:20px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.mini-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;animation:cardFloat 4s ease-in-out infinite alternate}
+.mini-card:nth-child(2){animation-delay:-1s}
+.mini-card:nth-child(3){animation-delay:-2s}
+.mini-card:nth-child(4){animation-delay:-3s}
+@keyframes cardFloat{0%{transform:translateY(0)}100%{transform:translateY(-4px)}}
+.mini-num{font-family:var(--serif);font-size:26px;color:#fff}
+.mini-lbl{font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px}
+.mini-bar{height:3px;border-radius:2px;margin-top:10px;overflow:hidden;background:rgba(255,255,255,0.08)}
+.mini-fill{height:100%;border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="bg-field">
+  <div class="grid-lines"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+</div>
+
+<nav>
+  <div class="nav-logo">
+    <div class="logo-mark">E</div>
+    <div class="logo-text">EduTrust <span>AI</span></div>
+  </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How It Works</a>
+    <a href="docs.html">Docs</a>
+  </div>
+  <div class="nav-cta">
+    <button class="btn btn-ghost" onclick="openModal('login')">Sign In</button>
+    <button class="btn btn-primary" onclick="openModal('register')">Start Free Trial</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge"><span class="pulse-dot"></span> Live MVP — Patent-Pending System</div>
+  <h1>Intelligent Outcome &amp; Trust<br>Evaluation for <em>Online Education</em></h1>
+  <p>Multi-dimensional AI analysis of student outcomes, dropout risk prediction, and institutional credibility scoring — integrated with your LMS in minutes.</p>
+  <div class="hero-actions">
+    <button class="btn btn-primary btn-xl" onclick="openModal('register')">Launch Dashboard →</button>
+    <button class="btn btn-ghost btn-lg" onclick="openModal('demo')">View Live Demo</button>
+  </div>
+  <div class="hero-note">No credit card required · Free 30-day trial · 2-minute setup</div>
+  <div style="margin-top:48px;display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap;">
+    <div style="font-size:11px;color:rgba(255,255,255,0.2);letter-spacing:0.1em;text-transform:uppercase;">Trusted by institutions in</div>
+    <span style="font-size:12px;color:rgba(255,255,255,0.3);font-weight:500;">🇮🇳 India</span>
+    <span style="font-size:12px;color:rgba(255,255,255,0.3);font-weight:500;">🇬🇧 United Kingdom</span>
+    <span style="font-size:12px;color:rgba(255,255,255,0.3);font-weight:500;">🇺🇸 United States</span>
+    <span style="font-size:12px;color:rgba(255,255,255,0.3);font-weight:500;">🇦🇺 Australia</span>
+  </div>
+</section>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num">94.7%</div><div class="stat-lbl">Dropout Prediction Accuracy</div></div>
+  <div class="stat"><div class="stat-num">6</div><div class="stat-lbl">Data Source Integrations</div></div>
+  <div class="stat"><div class="stat-num">12</div><div class="stat-lbl">Outcome Dimensions Tracked</div></div>
+  <div class="stat"><div class="stat-num">Real-time</div><div class="stat-lbl">Score Updates</div></div>
+</div>
+
+<div class="preview-section" id="how">
+  <div style="text-align:center;margin-bottom:28px;">
+    <div class="section-label">Live Dashboard Preview</div>
+    <div class="section-title" style="text-align:center">Everything in one unified view</div>
+  </div>
+  <div class="preview-frame">
+    <div class="preview-topbar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span style="font-size:11px;color:rgba(255,255,255,0.2);margin-left:8px;">app.edutrust.ai/dashboard</span>
+    </div>
+    <div class="preview-content">
+      <div class="mini-card">
+        <div class="mini-lbl">Outcome Score</div>
+        <div class="mini-num">78.4</div>
+        <div class="mini-bar"><div class="mini-fill" style="width:78%;background:var(--accent)"></div></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-lbl">Credibility Index</div>
+        <div class="mini-num">91.2</div>
+        <div class="mini-bar"><div class="mini-fill" style="width:91%;background:var(--green)"></div></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-lbl">Dropout Risk</div>
+        <div class="mini-num">12.6%</div>
+        <div class="mini-bar"><div class="mini-fill" style="width:13%;background:var(--amber)"></div></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-lbl">Trust Score</div>
+        <div class="mini-num">84.7</div>
+        <div class="mini-bar"><div class="mini-fill" style="width:85%;background:var(--gold)"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS STEPS -->
+<div style="position:relative;z-index:5;max-width:960px;margin:0 auto 80px;padding:0 24px;" id="how-steps">
+  <div style="text-align:center;margin-bottom:48px;">
+    <div class="section-label">How It Works</div>
+    <div class="section-title" style="text-align:center">From integration to insight<br><em>in under 48 hours</em></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;">
+    <div style="position:absolute;top:28px;left:12.5%;right:12.5%;height:1px;background:linear-gradient(90deg,transparent,rgba(26,86,255,0.4),rgba(0,184,107,0.4),transparent);z-index:0"></div>
+    <div style="text-align:center;padding:0 16px;position:relative;z-index:1">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(26,86,255,0.15);border:1px solid rgba(26,86,255,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:20px;">🔗</div>
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent2);margin-bottom:8px">Step 1</div>
+      <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:8px">Connect Your LMS</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.7">One-click integration with Moodle, Canvas, or any REST-compatible system.</div>
+    </div>
+    <div style="text-align:center;padding:0 16px;position:relative;z-index:1">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(26,86,255,0.1);border:1px solid rgba(26,86,255,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:20px;">⚡</div>
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent2);margin-bottom:8px">Step 2</div>
+      <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:8px">AI Processes Data</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.7">Our ETL pipeline ingests, normalises, and feeds 14 signals into the prediction engine.</div>
+    </div>
+    <div style="text-align:center;padding:0 16px;position:relative;z-index:1">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(0,184,107,0.1);border:1px solid rgba(0,184,107,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:20px;">◐</div>
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#00b86b;margin-bottom:8px">Step 3</div>
+      <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:8px">Scores Go Live</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.7">Outcome, trust, and credibility scores update in real-time across your institution.</div>
+    </div>
+    <div style="text-align:center;padding:0 16px;position:relative;z-index:1">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(212,168,83,0.1);border:1px solid rgba(212,168,83,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:20px;">📊</div>
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Step 4</div>
+      <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:8px">Act on Intelligence</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.7">Alerts, accreditation reports, and AI chat — everything to act before problems escalate.</div>
+    </div>
+  </div>
+</div>
+
+<section class="features" id="features">
+  <div class="section-label">Platform Capabilities</div>
+  <div class="section-title">Six integrated modules.<br><em>One unified intelligence layer.</em></div>
+  <div class="section-sub">From data ingestion to credibility scoring — every capability is live, connected, and powered by AI.</div>
+  <div class="feat-grid">
+    <div class="feat-card">
+      <div class="feat-icon blue">📥</div>
+      <div class="feat-title">Multi-Source Data Acquisition</div>
+      <div class="feat-desc">Connects to LMS (Moodle, Canvas), examination systems, SIS, and student portals. Real-time ETL pipeline with 99.9% uptime.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon blue">🤖</div>
+      <div class="feat-title">AI Dropout Prediction Engine</div>
+      <div class="feat-desc">Identifies at-risk students weeks before withdrawal using 14 behavioural and academic signals. 94.7% accuracy.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon green">◐</div>
+      <div class="feat-title">Multi-Dimensional Scoring</div>
+      <div class="feat-desc">Composite outcome scores across academic performance, engagement, assessment completion, skill attainment, and graduate outcomes.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon gold">◇</div>
+      <div class="feat-title">Trust & Credibility Module</div>
+      <div class="feat-desc">Generates verifiable credibility scores for programmes and institutions. Detects grade anomalies, plagiarism, and identity fraud in real-time.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon blue">⚠</div>
+      <div class="feat-title">Anomaly Detection</div>
+      <div class="feat-desc">AI-powered detection of academic misconduct, engagement fraud, grade manipulation, and assessment irregularities with severity classification.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon green">📊</div>
+      <div class="feat-title">Dynamic Reporting & Alerts</div>
+      <div class="feat-desc">Auto-generated reports for accreditation bodies, regulatory compliance, and institutional leadership. Push alerts for critical events.</div>
+    </div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<div style="position:relative;z-index:5;max-width:960px;margin:0 auto 80px;padding:0 24px;">
+  <div style="text-align:center;margin-bottom:40px;">
+    <div class="section-label">Built For</div>
+    <div class="section-title" style="text-align:center">Designed for every<br><em>institutional stakeholder</em></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:28px;">
+      <div style="font-size:28px;margin-bottom:14px">🏛</div>
+      <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:10px">Quality Officers & IQAC</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7">Generate NAAC/NIRF-ready outcome reports automatically. Track institutional metrics in real-time. Build accreditation packs in one click.</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:28px;">
+      <div style="font-size:28px;margin-bottom:14px">🎓</div>
+      <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:10px">Academic Leadership</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7">Single view of programme health. Know which courses underperform and why. Make data-backed decisions for curriculum and faculty allocation.</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:28px;">
+      <div style="font-size:28px;margin-bottom:14px">📚</div>
+      <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:10px">Faculty & Student Support</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7">Identify at-risk students weeks before dropout. Enable early intervention. Personalise support with AI-generated risk profiles.</div>
+    </div>
+  </div>
+</div>
+
+<div style="position:relative;z-index:5;text-align:center;padding:40px 24px 80px;">
+  <div class="section-title" style="text-align:center;margin-bottom:16px">Ready to see your institution's<br><em>real outcome intelligence?</em></div>
+  <button class="btn btn-primary btn-xl" onclick="openModal('register')">Get Started Free →</button>
+</div>
+
+<footer>
+  <p>© 2026 Rahul Sharma. All rights reserved. Proprietary software. &nbsp;·&nbsp; <a href="dashboard.html" style="color:rgba(255,255,255,0.3)">Dashboard</a> &nbsp;·&nbsp; <a href="docs.html" style="color:rgba(255,255,255,0.3)">Docs</a></p>
+</footer>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" id="modal">
+    <div class="modal-logo">
+      <div class="logo-mark" style="background:var(--accent)">E</div>
+    </div>
+    <h2 id="modal-title">Welcome back</h2>
+    <p id="modal-sub">Sign in to your EduTrust dashboard</p>
+
+    <div id="role-selector" style="display:none">
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;">Your Role</div>
+      <div class="role-select">
+        <button class="role-opt selected" onclick="selectRole(this,'admin')">🏛 Admin</button>
+        <button class="role-opt" onclick="selectRole(this,'analyst')">📊 Analyst</button>
+        <button class="role-opt" onclick="selectRole(this,'faculty')">🎓 Faculty</button>
+        <button class="role-opt" onclick="selectRole(this,'student')">📚 Student</button>
+      </div>
+    </div>
+
+    <div id="login-fields">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="email" type="email" placeholder="you@university.edu" value="admin@university.edu">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="password" type="password" placeholder="••••••••" value="demo1234">
+        <div class="error-msg" id="error-msg">Invalid credentials. Try: admin@university.edu / demo1234</div>
+      </div>
+    </div>
+
+    <div id="register-extra" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" id="reg-fullname" placeholder="Dr. Jane Smith">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Institution Name</label>
+        <input class="form-input" id="reg-institution" placeholder="State University">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="modal-submit-btn" style="width:100%;justify-content:center;padding:14px;" onclick="submitModal()">
+      Sign In →
+    </button>
+    <div class="modal-footer" id="modal-footer">
+      Don't have an account? <a href="#" onclick="switchToRegister()">Start free trial</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────
+// Replace YOUR_EMAIL below with your real email address
+// FormSubmit.co will send you every lead by email (free, no backend needed)
+const LEAD_EMAIL = 'rahulsharma@dbs.edu.in'; // ← YOUR EMAIL HERE
+
+let modalMode = 'login';
+let selectedRole = 'admin';
+
+// ── LEAD STORAGE ────────────────────────────────────────
+function saveLeadLocally(lead) {
+  const leads = JSON.parse(localStorage.getItem('edutrust_leads') || '[]');
+  lead.timestamp = new Date().toISOString();
+  lead.userAgent = navigator.userAgent.substring(0, 80);
+  leads.push(lead);
+  localStorage.setItem('edutrust_leads', JSON.stringify(leads));
+}
+
+async function sendLeadToEmail(lead) {
+  // FormSubmit.co — free email service, no backend needed
+  // First visit activates it; you get an activation email
+  try {
+    await fetch(`https://formsubmit.co/ajax/${LEAD_EMAIL}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        _subject: `🎯 New EduTrust Demo User: ${lead.name} — ${lead.institution}`,
+        Name: lead.name,
+        Email: lead.email,
+        Institution: lead.institution,
+        Role: lead.role,
+        Time: new Date().toLocaleString('en-IN', {timeZone:'Asia/Kolkata'}),
+        Source: 'EduTrust AI Demo Login'
+      })
+    });
+  } catch(e) { /* silent fail — local storage still works */ }
+}
+
+// ── MODAL ───────────────────────────────────────────────
+function openModal(mode) {
+  modalMode = mode;
+  const overlay = document.getElementById('modal-overlay');
+  const title   = document.getElementById('modal-title');
+  const sub     = document.getElementById('modal-sub');
+  const btn     = document.getElementById('modal-submit-btn');
+  const footer  = document.getElementById('modal-footer');
+  const roleSelector  = document.getElementById('role-selector');
+  const registerExtra = document.getElementById('register-extra');
+
+  // "View Live Demo" now requires registration — no free pass
+  if (mode === 'demo') {
+    title.textContent = 'Access Live Demo';
+    sub.textContent   = 'Fill your details to enter the platform';
+    btn.textContent   = 'Enter Demo →';
+    roleSelector.style.display  = 'block';
+    registerExtra.style.display = 'block';
+    footer.innerHTML = 'Already registered? <a href="#" onclick="switchToLogin()">Sign in</a>';
+    overlay.classList.add('open');
+    return;
+  }
+
+  if (mode === 'register') {
+    title.textContent = 'Start your free trial';
+    sub.textContent   = 'Set up your institution in 2 minutes';
+    btn.textContent   = 'Create Account →';
+    roleSelector.style.display  = 'block';
+    registerExtra.style.display = 'block';
+    footer.innerHTML = 'Already have an account? <a href="#" onclick="switchToLogin()">Sign in</a>';
+  } else {
+    title.textContent = 'Welcome back';
+    sub.textContent   = 'Sign in to your EduTrust dashboard';
+    btn.textContent   = 'Sign In →';
+    roleSelector.style.display  = 'none';
+    registerExtra.style.display = 'none';
+    footer.innerHTML  = "Don't have an account? <a href=\"#\" onclick=\"switchToRegister()\">Start free trial</a>";
+  }
+
+  overlay.classList.add('open');
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function switchToRegister() { openModal('register'); }
+function switchToLogin()    { openModal('login');    }
+
+function selectRole(el, role) {
+  document.querySelectorAll('.role-opt').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedRole = role;
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function submitModal() {
+  document.getElementById('error-msg').style.display = 'none';
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  if (modalMode === 'login') {
+    // Login — require email + password (6+ chars)
+    if (!email || !email.includes('@')) { showError('Please enter a valid email address.'); return; }
+    if (password.length < 6)            { showError('Password must be at least 6 characters.'); return; }
+
+    const name = email.split('@')[0].replace(/\./g,' ').replace(/\b\w/g,l=>l.toUpperCase());
+    const inst = email.split('@')[1]?.replace('.edu','').replace('.ac.in','').replace('.in','').toUpperCase()+' Institution' || 'My Institution';
+    const lead = { name, email, institution: inst, role: 'returning' };
+
+    saveLeadLocally(lead);
+    sendLeadToEmail(lead); // async, don't await
+
+    sessionStorage.setItem('et_auth', 'true');
+    sessionStorage.setItem('user', JSON.stringify({ name, role:'admin', institution: inst, email }));
+    window.location.href = 'dashboard.html';
+
+  } else {
+    // Register / Demo — require ALL fields
+    const instInput = document.querySelector('#register-extra input:nth-child(1)') ||
+                      document.querySelector('#register-extra .form-input:first-child');
+    const nameInput = document.querySelector('#register-extra input:nth-child(2)') ||
+                      document.querySelector('#register-extra .form-input:last-child');
+
+    const institution = document.getElementById('reg-institution')?.value.trim();
+    const fullname    = document.getElementById('reg-fullname')?.value.trim();
+
+    if (!email || !email.includes('@')) { showError('Please enter a valid email address.'); return; }
+    if (!fullname || fullname.length < 2){ showError('Please enter your full name.'); return; }
+    if (!institution || institution.length < 2){ showError('Please enter your institution name.'); return; }
+    if (password.length < 6)            { showError('Please set a password (min 6 characters).'); return; }
+
+    const lead = { name: fullname, email, institution, role: selectedRole };
+
+    // Show loading state
+    const btn = document.getElementById('modal-submit-btn');
+    btn.textContent = 'Setting up...';
+    btn.disabled = true;
+
+    saveLeadLocally(lead);
+    await sendLeadToEmail(lead);
+
+    sessionStorage.setItem('et_auth', 'true');
+    sessionStorage.setItem('user', JSON.stringify({ name: fullname, role: selectedRole, institution, email }));
+    window.location.href = 'dashboard.html';
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('modal-overlay').classList.remove('open');
+  if (e.key === 'Enter' && document.getElementById('modal-overlay').classList.contains('open')) submitModal();
+});
+</script>
+</body>
+</html>

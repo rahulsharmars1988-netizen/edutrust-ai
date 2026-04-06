@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduTrust — Admin: Lead Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0c0e14;--bg:#f8f9fc;--surface:#fff;--border:rgba(0,0,0,0.08);
+  --text:#0c0e14;--text2:#4a5168;--text3:#8a90a8;
+  --accent:#1a56ff;--green:#00b86b;--red:#ef4444;--amber:#f59e0b;
+  --greenLight:#e0f7ee;--redLight:#fee2e2;--accentLight:#e8eeff;
+  --serif:'Instrument Serif',serif;--sans:'Geist',sans-serif;--mono:'Geist Mono',monospace;
+}
+body{font-family:var(--sans);background:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center}
+
+/* LOCK SCREEN */
+.lock{background:#14181f;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:48px 40px;width:380px;text-align:center}
+.lock-icon{font-size:40px;margin-bottom:16px}
+.lock h1{font-family:var(--serif);font-size:28px;color:#fff;margin-bottom:8px}
+.lock p{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px}
+.lock input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px 16px;font-family:var(--sans);font-size:15px;color:#fff;outline:none;text-align:center;letter-spacing:0.15em;margin-bottom:14px}
+.lock input:focus{border-color:rgba(26,86,255,0.5)}
+.lock button{width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:13px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer}
+.lock .err{font-size:12px;color:#ff6b84;margin-top:10px;display:none}
+
+/* ADMIN PANEL */
+.admin{display:none;min-height:100vh;background:var(--bg)}
+.admin-nav{background:var(--ink);padding:16px 32px;display:flex;align-items:center;justify-content:space-between}
+.admin-nav h1{font-family:var(--serif);font-size:20px;color:#fff}
+.admin-nav span{font-size:12px;color:rgba(255,255,255,0.3)}
+.admin-body{padding:32px;max-width:1100px;margin:0 auto}
+
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.stat-num{font-family:var(--serif);font-size:36px;color:var(--text);margin-bottom:4px}
+.stat-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fafafa}
+.panel-title{font-size:14px;font-weight:600;color:var(--text)}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:10px 16px;border-bottom:1px solid var(--border);font-weight:500;background:#f8f9fc}
+td{padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.04);color:var(--text2);vertical-align:middle}
+tr:hover td{background:#f8f9fc}
+tr:last-child td{border-bottom:none}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-blue{background:var(--accentLight);color:var(--accent)}
+.badge-green{background:var(--greenLight);color:var(--green)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all 0.15s;text-decoration:none}
+.btn:hover{background:#f0f0f0}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:#1a50e0}
+.btn-red{background:var(--red);border-color:var(--red);color:#fff}
+
+.empty{text-align:center;padding:60px;color:var(--text3)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+
+.copy-btn{background:none;border:none;cursor:pointer;font-size:12px;color:var(--accent);padding:2px 6px;border-radius:4px}
+.copy-btn:hover{background:var(--accentLight)}
+
+footer-note{display:block;text-align:center;padding:20px;font-size:11px;color:var(--text3)}
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div class="lock" id="lockScreen">
+  <div class="lock-icon">🔐</div>
+  <h1>Admin Access</h1>
+  <p>This page is restricted to EduTrust administrators only.<br>Enter your admin password to continue.</p>
+  <input type="password" id="adminPass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')unlock()">
+  <button onclick="unlock()">Unlock Admin Panel →</button>
+  <div class="err" id="lockErr">Incorrect password. Please try again.</div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin" id="adminPanel">
+  <div class="admin-nav">
+    <h1>EduTrust AI — Lead Management</h1>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <span id="lastRefresh"></span>
+      <button class="btn" style="color:rgba(255,255,255,0.5);border-color:rgba(255,255,255,0.15);background:transparent" onclick="loadLeads()">⟳ Refresh</button>
+      <button class="btn btn-red" style="font-size:11px" onclick="lockPanel()">🔒 Lock</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+
+    <!-- Stats -->
+    <div class="stat-row" id="statsRow">
+      <div class="stat-box"><div class="stat-num" id="s-total">0</div><div class="stat-lbl">Total Signups</div></div>
+      <div class="stat-box"><div class="stat-num" id="s-today">0</div><div class="stat-lbl">Today</div></div>
+      <div class="stat-box"><div class="stat-num" id="s-inst">0</div><div class="stat-lbl">Unique Institutions</div></div>
+      <div class="stat-box"><div class="stat-num" id="s-roles">0</div><div class="stat-lbl">Roles Represented</div></div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn" onclick="copyEmails()">📋 Copy All Emails</button>
+      <button class="btn btn-red" onclick="clearLeads()">🗑 Clear All Leads</button>
+      <div style="margin-left:auto;font-size:12px;color:var(--text3);display:flex;align-items:center;">
+        <span>⚠ Data stored in this browser. Export CSV to save permanently.</span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">All Demo Signups</div>
+        <div style="font-size:11px;color:var(--text3)" id="leadCount">Loading...</div>
+      </div>
+      <div id="leadsTable">
+        <div class="empty"><div class="empty-icon">📭</div><div>No signups yet.<br>Share your demo link to start collecting leads.</div></div>
+      </div>
+    </div>
+
+    <!-- Email list -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Email List (for outreach)</div>
+        <button class="btn" onclick="copyEmails()" style="font-size:11px">Copy All</button>
+      </div>
+      <div style="padding:16px">
+        <textarea id="emailList" style="width:100%;height:100px;background:#f8f9fc;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:12px;color:var(--text2);resize:vertical;" readonly placeholder="Emails will appear here once signups come in..."></textarea>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:16px;font-size:11px;color:var(--text3);">
+      © 2026 Rahul Sharma. All rights reserved. Proprietary software. · EduTrust AI Admin Panel
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── ADMIN PASSWORD ──────────────────────────────────────
+// Change this to any password you want
+const ADMIN_PASSWORD = 'Rahul@EduTrust2026';
+
+function unlock() {
+  const pass = document.getElementById('adminPass').value;
+  if (pass === ADMIN_PASSWORD) {
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    document.body.style.background = 'var(--bg)';
+    loadLeads();
+  } else {
+    document.getElementById('lockErr').style.display = 'block';
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminPass').focus();
+  }
+}
+
+function lockPanel() {
+  document.getElementById('lockScreen').style.display = 'flex';
+  document.getElementById('adminPanel').style.display = 'none';
+  document.body.style.background = 'var(--ink)';
+  document.getElementById('adminPass').value = '';
+}
+
+// ── LEAD DATA ───────────────────────────────────────────
+function getLeads() {
+  return JSON.parse(localStorage.getItem('edutrust_leads') || '[]');
+}
+
+function loadLeads() {
+  const leads = getLeads();
+  document.getElementById('lastRefresh').textContent = 'Last refresh: ' + new Date().toLocaleTimeString();
+
+  // Stats
+  const today = new Date().toDateString();
+  const todayLeads = leads.filter(l => new Date(l.timestamp).toDateString() === today);
+  const uniqueInst = new Set(leads.map(l => l.institution?.toLowerCase())).size;
+  const uniqueRoles = new Set(leads.map(l => l.role)).size;
+
+  document.getElementById('s-total').textContent = leads.length;
+  document.getElementById('s-today').textContent = todayLeads.length;
+  document.getElementById('s-inst').textContent  = uniqueInst;
+  document.getElementById('s-roles').textContent = uniqueRoles;
+  document.getElementById('leadCount').textContent = `${leads.length} signup${leads.length !== 1 ? 's' : ''}`;
+
+  // Email list
+  const emails = [...new Set(leads.map(l => l.email).filter(Boolean))];
+  document.getElementById('emailList').value = emails.join(', ');
+
+  // Table
+  const container = document.getElementById('leadsTable');
+  if (leads.length === 0) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div>No signups yet.<br>Share your demo link to start collecting leads.</div></div>`;
+    return;
+  }
+
+  const sorted = [...leads].reverse(); // newest first
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Institution</th>
+          <th>Role</th>
+          <th>Date & Time (IST)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${sorted.map((l, i) => {
+          const dt = new Date(l.timestamp);
+          const dtStr = dt.toLocaleString('en-IN', {timeZone:'Asia/Kolkata', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+          const isToday = dt.toDateString() === today;
+          return `
+          <tr>
+            <td style="color:var(--text3);font-family:var(--mono)">${sorted.length - i}</td>
+            <td style="font-weight:500;color:var(--text)">${l.name || '—'}</td>
+            <td>
+              <a href="mailto:${l.email}" style="color:var(--accent);text-decoration:none">${l.email || '—'}</a>
+              <button class="copy-btn" onclick="navigator.clipboard.writeText('${l.email}');this.textContent='✓';setTimeout(()=>this.textContent='copy',1500)" title="Copy email">copy</button>
+            </td>
+            <td>${l.institution || '—'}</td>
+            <td><span class="badge badge-blue">${l.role || '—'}</span></td>
+            <td style="font-family:var(--mono);font-size:11px">
+              ${dtStr}
+              ${isToday ? '<span class="badge badge-green" style="margin-left:4px">Today</span>' : ''}
+            </td>
+            <td>
+              <a href="mailto:${l.email}?subject=EduTrust AI — Your Demo Access&body=Hi ${l.name},%0A%0AThank you for trying EduTrust AI!%0A%0ABest regards,%0ARahul Sharma" class="btn" style="font-size:11px;padding:4px 10px;">✉ Email</a>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ── EXPORT CSV ──────────────────────────────────────────
+function exportCSV() {
+  const leads = getLeads();
+  if (!leads.length) { alert('No leads to export yet.'); return; }
+  const headers = ['#','Name','Email','Institution','Role','Timestamp (UTC)'];
+  const rows = leads.map((l, i) => [
+    i + 1,
+    `"${(l.name||'').replace(/"/g,'""')}"`,
+    l.email || '',
+    `"${(l.institution||'').replace(/"/g,'""')}"`,
+    l.role || '',
+    l.timestamp || ''
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `edutrust-leads-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── COPY EMAILS ─────────────────────────────────────────
+function copyEmails() {
+  const leads = getLeads();
+  const emails = [...new Set(leads.map(l => l.email).filter(Boolean))].join(', ');
+  if (!emails) { alert('No emails collected yet.'); return; }
+  navigator.clipboard.writeText(emails).then(() => {
+    alert(`✓ ${emails.split(',').length} email(s) copied to clipboard!`);
+  });
+}
+
+// ── CLEAR LEADS ─────────────────────────────────────────
+function clearLeads() {
+  if (!confirm('⚠ Are you sure you want to delete ALL leads? This cannot be undone.\n\nExport the CSV first!')) return;
+  localStorage.removeItem('edutrust_leads');
+  loadLeads();
+}
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('lockScreen').style.display !== 'none') unlock();
+});
+</script>
+</body>
+</html>

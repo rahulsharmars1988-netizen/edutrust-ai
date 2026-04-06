@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+// ── AUTH GUARD — Must be FIRST in <head> ──────────────
+// If someone tries to open dashboard.html directly without logging in,
+// they are immediately redirected back to the login page.
+(function() {
+  const auth = sessionStorage.getItem('et_auth');
+  const user = sessionStorage.getItem('user');
+  if (!auth || !user) {
+    window.location.replace('index.html');
+  }
+})();
+</script>
+<title>EduTrust AI — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8f9fc;
+  --surface:#ffffff;
+  --surface2:#f2f4f8;
+  --surface3:#e8eaf0;
+  --border:rgba(0,0,0,0.07);
+  --border2:rgba(0,0,0,0.12);
+  --text:#0c0e14;
+  --text2:#4a5168;
+  --text3:#8a90a8;
+  --accent:#1a56ff;
+  --accent2:#3d72ff;
+  --accentLight:#e8eeff;
+  --green:#00b86b;
+  --greenLight:#e0f7ee;
+  --amber:#f59e0b;
+  --amberLight:#fef3c7;
+  --red:#ef4444;
+  --redLight:#fee2e2;
+  --gold:#d4a853;
+  --goldLight:#fef9ec;
+  --ink:#0c0e14;
+  --serif:'Instrument Serif',serif;
+  --sans:'Geist',sans-serif;
+  --mono:'Geist Mono',monospace;
+  --sidebar:240px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar);flex-shrink:0;
+  background:var(--ink);
+  display:flex;flex-direction:column;
+  height:100vh;overflow:hidden;
+  position:relative;
+}
+.sidebar::after{
+  content:'';position:absolute;top:0;right:0;bottom:0;width:1px;
+  background:linear-gradient(180deg,transparent,rgba(255,255,255,0.08) 30%,rgba(255,255,255,0.08) 70%,transparent);
+}
+.s-logo{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.s-logo-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.logo-mark{width:30px;height:30px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700;flex-shrink:0}
+.logo-name{font-family:var(--serif);font-size:17px;color:#fff}
+.logo-name span{opacity:0.4}
+.s-inst{font-size:11px;color:rgba(255,255,255,0.3);padding-left:2px}
+
+.s-nav{flex:1;overflow-y:auto;padding:12px 10px}
+.s-section{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.22);padding:10px 8px 5px;margin-top:4px}
+.s-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:8px;
+  cursor:pointer;transition:all 0.15s;
+  font-size:13px;font-weight:500;color:rgba(255,255,255,0.45);
+  margin-bottom:1px;
+}
+.s-item:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.75)}
+.s-item.active{background:rgba(26,86,255,0.18);color:#fff;border:1px solid rgba(26,86,255,0.3)}
+.s-icon{font-size:15px;width:20px;text-align:center;opacity:0.8}
+.s-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px}
+.s-badge.green{background:var(--green)}
+
+.s-user{padding:14px 16px;border-top:1px solid rgba(255,255,255,0.07)}
+.s-user-row{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:10px;color:rgba(255,255,255,0.35);text-transform:capitalize}
+.s-logout{font-size:13px;cursor:pointer;opacity:0.3;transition:opacity 0.2s}
+.s-logout:hover{opacity:0.8}
+
+/* ── MAIN ── */
+.main{flex:1;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* TOPBAR */
+.topbar{
+  padding:14px 28px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface);flex-shrink:0;
+  box-shadow:0 1px 3px rgba(0,0,0,0.04);
+}
+.tb-left{display:flex;flex-direction:column}
+.tb-title{font-size:16px;font-weight:600;color:var(--text)}
+.tb-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.tb-right{display:flex;align-items:center;gap:10px}
+
+.tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.tag-green{background:var(--greenLight);color:var(--green)}
+.tag-blue{background:var(--accentLight);color:var(--accent)}
+.tag-amber{background:var(--amberLight);color:var(--amber)}
+.tag-red{background:var(--redLight);color:var(--red)}
+
+.pulse-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text);transition:all 0.15s}
+.btn:hover{background:var(--surface3);border-color:rgba(0,0,0,0.18)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-danger{background:var(--red);border-color:var(--red);color:#fff}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:24px 28px}
+
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:13px;font-weight:600;color:var(--text)}
+.panel-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.panel-body{padding:18px}
+
+/* SCORE CARDS */
+.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.score-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:18px;position:relative;overflow:hidden;
+}
+.score-card::after{content:'';position:absolute;inset:0;border-radius:12px;pointer-events:none}
+.sc-top-bar{height:3px;border-radius:2px 2px 0 0;position:absolute;top:0;left:0;right:0}
+.sc-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.sc-value{font-family:var(--serif);font-size:38px;color:var(--text);line-height:1;margin-bottom:6px}
+.sc-change{font-size:11px;display:flex;align-items:center;gap:4px;color:var(--text3)}
+.sc-note{font-size:10px;color:var(--text3);margin-top:4px}
+.up{color:var(--green)}.down{color:var(--red)}
+
+/* GRIDS */
+.g-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.g-3{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px}
+.g-full{margin-bottom:14px}
+
+/* PROGRESS */
+.prog-wrap{margin-bottom:10px}
+.prog-head{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px}
+.prog-label{color:var(--text2)}
+.prog-val{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500}
+.prog-bar{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(0.4,0,0.2,1)}
+
+/* TABLES */
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{text-align:left;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:9px 12px;border-bottom:1px solid var(--border);font-weight:500;background:var(--surface2)}
+.data-table td{padding:11px 12px;border-bottom:1px solid rgba(0,0,0,0.04);color:var(--text2);vertical-align:middle}
+.data-table tr:hover td{background:var(--surface2)}
+.data-table tr:last-child td{border-bottom:none}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-red{background:var(--redLight);color:var(--red)}
+.badge-amber{background:var(--amberLight);color:var(--amber)}
+.badge-green{background:var(--greenLight);color:var(--green)}
+.badge-blue{background:var(--accentLight);color:var(--accent)}
+
+/* CHART */
+.chart-wrap{position:relative;width:100%}
+
+/* AI CHAT */
+.ai-wrap{display:flex;flex-direction:column;height:440px}
+.ai-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{display:flex;gap:10px;align-items:flex-start}
+.msg-av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.msg-av.ai{background:var(--accentLight);color:var(--accent);border:1px solid rgba(26,86,255,0.2)}
+.msg-av.user{background:var(--greenLight);color:var(--green)}
+.msg-bub{border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.65;color:var(--text2);max-width:88%}
+.msg-bub.ai{background:var(--surface)}
+.msg-bub.user{background:var(--accentLight);border-color:rgba(26,86,255,0.15);color:var(--text)}
+.ai-input-row{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px}
+.ai-input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-family:var(--sans);font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s}
+.ai-input:focus{border-color:rgba(26,86,255,0.4);background:var(--surface)}
+
+/* TYPING */
+.typing{display:flex;align-items:center;gap:4px;padding:3px 0}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:blink 1.2s infinite}
+.typing span:nth-child(2){animation-delay:0.2s}
+.typing span:nth-child(3){animation-delay:0.4s}
+@keyframes blink{0%,100%{opacity:0.2}50%{opacity:1}}
+
+/* FORMS */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-g{display:flex;flex-direction:column;gap:5px}
+.form-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em}
+.form-inp,.form-sel{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-family:var(--sans);font-size:13px;color:var(--text);outline:none;width:100%;transition:border-color 0.15s}
+.form-inp:focus,.form-sel:focus{border-color:rgba(26,86,255,0.4);background:var(--surface)}
+
+/* ANOMALY */
+.anom-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.anom-item:last-child{border-bottom:none}
+.anom-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.anom-icon.crit{background:var(--redLight)}
+.anom-icon.warn{background:var(--amberLight)}
+.anom-icon.ok{background:var(--greenLight)}
+.anom-body{flex:1;font-size:12px;color:var(--text2);line-height:1.5}
+.anom-body strong{color:var(--text);font-size:13px;display:block;margin-bottom:2px}
+.anom-time{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px}
+
+/* TRUST RING */
+.trust-center{display:flex;flex-direction:column;align-items:center;margin-bottom:16px}
+.trust-big{font-family:var(--serif);font-size:52px;color:var(--text);line-height:1}
+.trust-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em}
+
+/* CRED BIG */
+.cred-big{font-family:var(--serif);font-size:64px;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;line-height:1}
+
+/* RISK METER */
+.risk-meter{display:flex;flex-direction:column;align-items:center;padding:20px 0}
+.risk-num{font-family:var(--serif);font-size:60px;line-height:1;margin-bottom:8px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:4px}
+
+/* HIDDEN */
+.hidden{display:none!important}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:40px;color:var(--text3);font-size:13px}
+
+/* DONUT overlay */
+.donut-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.donut-center{position:absolute;text-align:center}
+
+/* QUICK BTNS */
+.quick-btns{display:flex;flex-direction:column;gap:8px}
+
+/* RESULT BOX */
+.result-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;color:var(--text2);line-height:1.7;margin-top:12px}
+.result-box.danger{background:var(--redLight);border-color:rgba(239,68,68,0.2)}
+
+/* NOTIFICATION */
+.notif{
+  position:fixed;top:20px;right:20px;z-index:999;
+  background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;
+  font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,0.2);
+  transform:translateX(120%);transition:transform 0.3s;max-width:320px;
+}
+.notif.show{transform:translateX(0)}
+
+/* WEIGHT SLIDER */
+.weight-dim{margin-bottom:14px}
+.weight-dim-head{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px}
+.weight-dim-name{color:var(--text2)}
+.weight-dim-val{font-family:var(--mono);font-size:11px;color:var(--accent)}
+
+/* Loading spinner */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="s-logo">
+    <div class="s-logo-row">
+      <div class="logo-mark">E</div>
+      <div class="logo-name">EduTrust <span>AI</span></div>
+    </div>
+    <div class="s-inst" id="s-inst">Loading...</div>
+  </div>
+  <nav class="s-nav">
+    <div class="s-section">Core</div>
+    <div class="s-item active" onclick="navigate('dashboard',this)"><span class="s-icon">◈</span> Dashboard</div>
+    <div class="s-item" onclick="navigate('students',this)"><span class="s-icon">◉</span> Student Outcomes</div>
+    <div class="s-item" onclick="navigate('dropout',this)"><span class="s-icon">▲</span> Dropout Predictor</div>
+    <div class="s-item" onclick="navigate('trust',this)"><span class="s-icon">◇</span> Trust Evaluation</div>
+    <div class="s-section">Intelligence</div>
+    <div class="s-item" onclick="navigate('ai',this)"><span class="s-icon">✦</span> AI Analysis <span class="s-badge green">Live</span></div>
+    <div class="s-item" onclick="navigate('anomaly',this)"><span class="s-icon">⚠</span> Anomaly Detection <span class="s-badge" id="anom-badge">3</span></div>
+    <div class="s-item" onclick="navigate('scoring',this)"><span class="s-icon">◐</span> Scoring Engine</div>
+    <div class="s-section">Reports</div>
+    <div class="s-item" onclick="navigate('reports',this)"><span class="s-icon">📋</span> Auto-Reports</div>
+    <div class="s-item" onclick="navigate('settings',this)"><span class="s-icon">⚙</span> Settings</div>
+  </nav>
+  <div class="s-user">
+    <div class="s-user-row">
+      <div class="avatar" id="user-avatar">U</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Loading</div>
+        <div class="user-role" id="user-role">Role</div>
+      </div>
+      <span class="s-logout" onclick="logout()" title="Sign out">⎋</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-title" id="page-title">System Dashboard</div>
+      <div class="tb-sub" id="page-sub">Real-time multi-dimensional outcome &amp; trust evaluation</div>
+    </div>
+    <div class="tb-right">
+      <span class="tag tag-green"><span class="pulse-dot"></span> 6 Sources Live</span>
+      <span class="tag tag-blue">AI Engine Active</span>
+      <button class="btn btn-sm" onclick="refreshData()">⟳ Refresh</button>
+      <button class="btn btn-primary btn-sm" onclick="generateReport()">📋 Export Report</button>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+    <!-- Dynamic content injected here -->
+  </div>
+</main>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+const CLAUDE = "claude-sonnet-4-20250514";
+let user = null;
+let chatHistory = [];
+let charts = {};
+let currentPage = 'dashboard';
+
+const students = [
+  {id:'STU-001',name:'Aditya Sharma',prog:'Computer Science',semester:3,gpa:3.6,att:91,logins:8,missed:1,score:87.2,eng:89,risk:'Low',fin:'Full Aid',trend:'▲',gender:'M'},
+  {id:'STU-002',name:'Priya Mehra',prog:'Data Science',semester:2,gpa:1.9,att:58,logins:2,missed:6,score:38.4,eng:34,risk:'High',fin:'Partial Aid',trend:'▼',gender:'F'},
+  {id:'STU-003',name:'Rahul Verma',prog:'Business Admin',semester:4,gpa:2.7,att:72,logins:4,missed:3,score:61.7,eng:57,risk:'Medium',fin:'No Aid',trend:'▲',gender:'M'},
+  {id:'STU-004',name:'Anjali Singh',prog:'Healthcare Mgmt',semester:1,gpa:3.9,att:97,logins:11,missed:0,score:94.3,eng:92,risk:'Low',fin:'Scholarship',trend:'▲',gender:'F'},
+  {id:'STU-005',name:'Vikram Nair',prog:'Computer Science',semester:2,gpa:1.6,att:51,logins:1,missed:7,score:32.1,eng:28,risk:'High',fin:'No Aid',trend:'▼',gender:'M'},
+  {id:'STU-006',name:'Sneha Patel',prog:'Data Science',semester:3,gpa:3.1,att:82,logins:6,missed:2,score:71.8,eng:74,risk:'Low',fin:'Partial Aid',trend:'—',gender:'F'},
+  {id:'STU-007',name:'Arjun Rao',prog:'Business Admin',semester:1,gpa:2.3,att:67,logins:3,missed:4,score:52.9,eng:49,risk:'Medium',fin:'Partial Aid',trend:'▼',gender:'M'},
+  {id:'STU-008',name:'Kavya Reddy',prog:'Healthcare Mgmt',semester:2,gpa:2.9,att:79,logins:5,missed:2,score:68.4,eng:65,risk:'Medium',fin:'Full Aid',trend:'▲',gender:'F'},
+  {id:'STU-009',name:'Deepak Kumar',prog:'Engineering',semester:4,gpa:3.4,att:88,logins:7,missed:1,score:81.6,eng:83,risk:'Low',fin:'Scholarship',trend:'▲',gender:'M'},
+  {id:'STU-010',name:'Meera Iyer',prog:'Engineering',semester:1,gpa:1.4,att:44,logins:1,missed:9,score:24.7,eng:21,risk:'High',fin:'No Aid',trend:'▼',gender:'F'},
+];
+
+const anomalies = [
+  {type:'crit',icon:'🔴',title:'Grade Spike Detected',desc:'STU-047 scored 89% after consistently scoring below 42%. No proportional engagement change detected in LMS logs.',time:'14 min ago'},
+  {type:'warn',icon:'🟡',title:'Plagiarism Pattern',desc:'3 submissions in DS-301 share 94% code similarity. Automated hold placed pending faculty review.',time:'1 hr ago'},
+  {type:'warn',icon:'🟡',title:'Geo-location Mismatch',desc:'STU-022 authenticated from 4 countries within 6 hours during live exam session.',time:'2 hr ago'},
+  {type:'ok',icon:'🟢',title:'Batch Integrity Cleared',desc:'Semester exam biometric verification passed with 98.4% confidence across 847 students.',time:'3 hr ago'},
+  {type:'warn',icon:'🟡',title:'Low Biometric Confidence',desc:'STU-105 facial recognition below 65% threshold for 3 consecutive assessments.',time:'5 hr ago'},
+];
+
+const dimensions = [
+  {name:'Academic Performance',key:'academic',weight:30,value:76,color:'#1a56ff'},
+  {name:'Engagement & Participation',key:'engage',weight:20,value:68,color:'#00b86b'},
+  {name:'Assessment Completion',key:'assess',weight:20,value:84,color:'#f59e0b'},
+  {name:'Skill Attainment',key:'skill',weight:15,value:79,color:'#8b5cf6'},
+  {name:'Graduate Outcomes',key:'grad',weight:15,value:82,color:'#06b6d4'},
+];
+
+// ── INIT ───────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  user = JSON.parse(sessionStorage.getItem('user') || 'null');
+  if (!user) { window.location.href = 'index.html'; return; }
+
+  document.getElementById('s-inst').textContent = user.institution || 'My Institution';
+  document.getElementById('user-name').textContent = user.name || 'User';
+  document.getElementById('user-role').textContent = user.role || 'admin';
+  document.getElementById('user-avatar').textContent = (user.name||'U').charAt(0).toUpperCase();
+
+  renderPage('dashboard');
+});
+
+function logout() {
+  sessionStorage.clear();
+  window.location.href = 'index.html';
+}
+
+function navigate(page, el) {
+  document.querySelectorAll('.s-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderPage(page);
+  currentPage = page;
+}
+
+// ── NOTIFICATIONS ──────────────────────────────────────
+function notify(msg, duration=3000) {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ── PAGE ROUTER ────────────────────────────────────────
+function renderPage(page) {
+  const titles = {
+    dashboard:'System Dashboard',students:'Student Outcome Records',
+    dropout:'AI Dropout Predictor',trust:'Trust & Credibility Evaluation',
+    ai:'AI Analysis Engine',anomaly:'Anomaly Detection',
+    scoring:'Multi-Dimensional Scoring Engine',reports:'Automated Reports',settings:'System Settings'
+  };
+  document.getElementById('page-title').textContent = titles[page]||page;
+
+  const subs = {
+    dashboard:'Real-time outcome & trust intelligence across all programmes',
+    students:'AI-computed outcome scores and performance indicators per student',
+    dropout:'Predict and prevent student dropout using 14 behavioural signals',
+    trust:'Evaluate programme credibility and institutional trust scores',
+    ai:'Conversational AI analysis powered by Claude — ask anything',
+    anomaly:'Real-time detection of academic misconduct and data irregularities',
+    scoring:'Configure dimension weights and generate composite outcome scores',
+    reports:'Auto-generated compliance and accreditation reports',
+    settings:'Data sources, integrations, and system configuration'
+  };
+  document.getElementById('page-sub').textContent = subs[page]||'';
+
+  const render = {
+    dashboard: renderDashboard,
+    students: renderStudents,
+    dropout: renderDropout,
+    trust: renderTrust,
+    ai: renderAI,
+    anomaly: renderAnomaly,
+    scoring: renderScoring,
+    reports: renderReports,
+    settings: renderSettings
+  };
+
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  charts = {};
+
+  const fn = render[page];
+  if (fn) fn();
+}
+
+// ── DASHBOARD ──────────────────────────────────────────
+function renderDashboard() {
+  document.getElementById('content').innerHTML = `
+    <div class="score-grid">
+      <div class="score-card">
+        <div class="sc-top-bar" style="background:var(--accent)"></div>
+        <div class="sc-label">Overall Outcome Score</div>
+        <div class="sc-value">78.4</div>
+        <div class="sc-change"><span class="up">▲ +2.1</span> pts this month</div>
+        <div class="sc-note">Composite across 5 dimensions</div>
+      </div>
+      <div class="score-card">
+        <div class="sc-top-bar" style="background:var(--green)"></div>
+        <div class="sc-label">Credibility Index</div>
+        <div class="sc-value">91.2</div>
+        <div class="sc-change"><span class="up">▲ +0.8</span> pts this month</div>
+        <div class="sc-note">Institution: ${user?.institution||'University'}</div>
+      </div>
+      <div class="score-card">
+        <div class="sc-top-bar" style="background:var(--amber)"></div>
+        <div class="sc-label">Cohort Dropout Risk</div>
+        <div class="sc-value">12.6<small style="font-size:20px">%</small></div>
+        <div class="sc-change"><span class="up">▼ −1.4%</span> vs last month</div>
+        <div class="sc-note">47 at-risk students flagged</div>
+      </div>
+      <div class="score-card">
+        <div class="sc-top-bar" style="background:var(--gold)"></div>
+        <div class="sc-label">Trust Score</div>
+        <div class="sc-value">84.7</div>
+        <div class="sc-change"><span class="up">▲ +3.2</span> pts this month</div>
+        <div class="sc-note">3 anomalies under review</div>
+      </div>
+    </div>
+
+    <div class="g-3">
+      <div class="panel">
+        <div class="panel-head">
+          <div><div class="panel-title">Outcome & Trust Trend — 12 Months</div><div class="panel-sub">Composite scores across all enrolled programmes</div></div>
+          <select class="form-sel" style="width:auto;font-size:12px;padding:5px 10px;" onchange="updateTrendChart(this.value)">
+            <option>All Programmes</option><option>Computer Science</option><option>Business Admin</option><option>Healthcare</option>
+          </select>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:14px;margin-bottom:12px;font-size:11px;">
+            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent);display:inline-block;"></span>Outcome Score</span>
+            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block;"></span>Trust Score</span>
+          </div>
+          <div class="chart-wrap" style="height:230px;"><canvas id="trendChart"></canvas></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Trust Breakdown</div></div>
+        <div class="panel-body">
+          <div class="trust-center">
+            <div class="donut-wrap">
+              <canvas id="trustDonut" width="150" height="150"></canvas>
+              <div class="donut-center">
+                <div class="trust-big">84.7</div>
+                <div class="trust-label">Trust</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            ${[['Data Integrity','94.1','#1a56ff'],['Assessment Validity','88.3','#00b86b'],['Faculty Credibility','79.2','#f59e0b'],['Transparency','77.4','#8b5cf6']].map(([l,v,c])=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;">
+              <span style="display:flex;align-items:center;gap:6px;color:var(--text2)">
+                <span style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block;"></span>${l}
+              </span>
+              <span style="font-family:var(--mono);font-size:11px;color:var(--accent)">${v}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g-2">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Dropout Risk by Programme</div><div class="panel-sub">AI-predicted risk this semester</div></div>
+        <div class="panel-body"><div class="chart-wrap" style="height:190px;"><canvas id="dropChart"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Data Source Integrity</div><div class="panel-sub">Live acquisition health</div></div>
+        <div class="panel-body">
+          ${[['LMS (Moodle/Canvas)','98.4','var(--green)'],['Examination System','95.1','var(--accent)'],['Student Portal','91.7','#06b6d4'],['SIS / Academic Records','99.9','#8b5cf6'],['Financial Aid API','87.3','var(--amber)'],['Engagement Analytics','82.6','var(--red)']].map(([l,v,c])=>`
+          <div class="prog-wrap">
+            <div class="prog-head"><span class="prog-label">${l}</span><span class="prog-val">${v}%</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:${v}%;background:${c}"></div></div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel g-full">
+      <div class="panel-head">
+        <div><div class="panel-title">High-Risk Students Requiring Attention</div><div class="panel-sub">AI-flagged for immediate intervention</div></div>
+        <button class="btn btn-sm btn-primary" onclick="navigate('students',null)">View All →</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>Name</th><th>Programme</th><th>Outcome Score</th><th>Risk Level</th><th>Key Signal</th><th>Action</th></tr></thead>
+          <tbody>
+            ${students.filter(s=>s.risk==='High').map(s=>`<tr>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--accent)">${s.id}</td>
+              <td style="font-weight:500;color:var(--text)">${s.name}</td>
+              <td style="color:var(--text3)">${s.prog}</td>
+              <td><span style="font-family:var(--mono);color:var(--red)">${s.score}</span></td>
+              <td><span class="badge badge-red">High Risk</span></td>
+              <td style="font-size:11px">GPA ${s.gpa} · Att ${s.att}% · ${s.missed} missed</td>
+              <td><button class="btn btn-sm" onclick="analyzeStudentFromDash('${s.id}')">Analyse ↗</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  setTimeout(initDashCharts, 80);
+}
+
+function initDashCharts() {
+  const months = ['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
+  charts.trend = new Chart(document.getElementById('trendChart'), {
+    type:'line',
+    data:{
+      labels:months,
+      datasets:[
+        {label:'Outcome',data:[71.2,72.8,70.1,73.4,74.8,75.2,76.1,74.9,76.8,77.3,78.1,78.4],borderColor:'#1a56ff',backgroundColor:'rgba(26,86,255,0.06)',tension:0.4,fill:true,pointRadius:3,borderWidth:2},
+        {label:'Trust',data:[78.1,79.2,77.4,80.1,80.8,81.4,82.1,81.8,83.0,83.8,84.2,84.7],borderColor:'#00b86b',backgroundColor:'rgba(0,184,107,0.05)',tension:0.4,fill:true,pointRadius:3,borderWidth:2}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index'}},scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#8a90a8',font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#8a90a8',font:{size:10}},min:65,max:95}}}
+  });
+  charts.trust = new Chart(document.getElementById('trustDonut'), {
+    type:'doughnut',
+    data:{datasets:[{data:[94.1,88.3,79.2,77.4],backgroundColor:['#1a56ff','#00b86b','#f59e0b','#8b5cf6'],borderWidth:2,borderColor:'#fff',hoverOffset:4}]},
+    options:{responsive:false,cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}}}
+  });
+  charts.drop = new Chart(document.getElementById('dropChart'), {
+    type:'bar',
+    data:{
+      labels:['CS','Data Sci','Business','Healthcare','Law','Engineering'],
+      datasets:[{data:[9.2,14.8,18.3,7.4,22.1,11.6],backgroundColor:['#00b86b','#f59e0b','#ef4444','#1a56ff','#ef4444','#00b86b'],borderRadius:5,borderWidth:0}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#8a90a8',font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#8a90a8',font:{size:10},callback:v=>v+'%'},max:30}}}
+  });
+}
+
+function analyzeStudentFromDash(id) {
+  const s = students.find(x=>x.id===id);
+  if (!s) return;
+  navigate('ai', document.querySelector('.s-item:nth-child(6)'));
+  setTimeout(() => {
+    document.getElementById('ai-input').value = `Analyze dropout risk and provide 5 interventions for ${s.name} (${s.id}), ${s.prog}, GPA ${s.gpa}, Attendance ${s.att}%, ${s.missed} assignments missed, LMS logins per week: ${s.logins}, financial aid: ${s.fin}.`;
+    sendAI();
+  }, 200);
+}
+
+// ── STUDENTS ───────────────────────────────────────────
+function renderStudents() {
+  document.getElementById('content').innerHTML = `
+    <div class="panel g-full">
+      <div class="panel-head">
+        <div><div class="panel-title">All Student Outcome Records</div><div class="panel-sub">${students.length} students · AI-scored</div></div>
+        <div style="display:flex;gap:8px;">
+          <input class="form-inp" id="stu-search" placeholder="Search name or ID..." style="width:200px;" oninput="filterStudents(this.value)">
+          <select class="form-sel" style="width:auto;" onchange="filterByRisk(this.value)">
+            <option value="">All Risk Levels</option><option>High</option><option>Medium</option><option>Low</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="stu-table">
+          <thead><tr><th>ID</th><th>Student</th><th>Programme</th><th>Semester</th><th>GPA</th><th>Attendance</th><th>Outcome Score</th><th>Engagement</th><th>Risk</th><th>Trend</th><th>Action</th></tr></thead>
+          <tbody id="stu-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="g-2">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Score Distribution</div><div class="panel-sub">Outcome score frequency across cohort</div></div>
+        <div class="panel-body"><div class="chart-wrap" style="height:200px;"><canvas id="distChart"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Outcome Radar — Cohort Average</div></div>
+        <div class="panel-body"><div class="chart-wrap" style="height:200px;"><canvas id="radarChart"></canvas></div></div>
+      </div>
+    </div>
+  `;
+  renderStudentRows(students);
+  setTimeout(() => {
+    charts.dist = new Chart(document.getElementById('distChart'),{type:'bar',data:{labels:['0–20','20–40','40–60','60–70','70–80','80–90','90–100'],datasets:[{data:[1,3,2,1,1,1,1],backgroundColor:'#1a56ff',borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#8a90a8',font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#8a90a8',font:{size:10},stepSize:1}}}}});
+    charts.radar = new Chart(document.getElementById('radarChart'),{type:'radar',data:{labels:['Academic','Engagement','Assessment','Skill','Graduate'],datasets:[{data:[76,68,84,79,82],backgroundColor:'rgba(26,86,255,0.1)',borderColor:'#1a56ff',pointBackgroundColor:'#1a56ff',borderWidth:2,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{display:false},pointLabels:{color:'#8a90a8',font:{size:10}}}}}});
+  }, 80);
+}
+
+function renderStudentRows(list) {
+  const body = document.getElementById('stu-body');
+  if (!body) return;
+  body.innerHTML = list.map(s=>`<tr>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--accent)">${s.id}</td>
+    <td style="font-weight:500;color:var(--text)">${s.name}</td>
+    <td style="color:var(--text3);font-size:12px">${s.prog}</td>
+    <td style="text-align:center">${s.semester}</td>
+    <td><span style="font-family:var(--mono);font-weight:500;color:${s.gpa<2?'var(--red)':s.gpa<3?'var(--amber)':'var(--green)'}">${s.gpa}</span></td>
+    <td>
+      <div class="prog-bar" style="width:70px;"><div class="prog-fill" style="width:${s.att}%;background:${s.att<60?'var(--red)':s.att<75?'var(--amber)':'var(--green)'}"></div></div>
+      <span style="font-size:10px;color:var(--text3)">${s.att}%</span>
+    </td>
+    <td><span style="font-family:var(--mono);font-weight:500;color:${s.score<50?'var(--red)':s.score<70?'var(--amber)':'var(--accent)'}">${s.score}</span></td>
+    <td>
+      <div class="prog-bar" style="width:70px;"><div class="prog-fill" style="width:${s.eng}%;background:var(--accent)"></div></div>
+      <span style="font-size:10px;color:var(--text3)">${s.eng}%</span>
+    </td>
+    <td><span class="badge badge-${s.risk==='High'?'red':s.risk==='Medium'?'amber':'green'}">${s.risk}</span></td>
+    <td style="color:${s.trend==='▲'?'var(--green)':s.trend==='▼'?'var(--red)':'var(--text3)'};font-size:16px">${s.trend}</td>
+    <td><button class="btn btn-sm" onclick="analyzeStudentFromDash('${s.id}')">AI Analysis ↗</button></td>
+  </tr>`).join('');
+}
+
+function filterStudents(q) {
+  const filtered = students.filter(s=>s.name.toLowerCase().includes(q.toLowerCase())||s.id.includes(q));
+  renderStudentRows(filtered);
+}
+function filterByRisk(r) { renderStudentRows(r?students.filter(s=>s.risk===r):students); }
+
+// ── DROPOUT ────────────────────────────────────────────
+function renderDropout() {
+  document.getElementById('content').innerHTML = `
+    <div class="g-2" style="margin-bottom:14px;">
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">Student Dropout Risk Assessment</div><div class="panel-sub">Enter data for AI prediction using 14 behavioural signals</div></div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-g"><label class="form-lbl">Student ID</label><input class="form-inp" id="dp-id" value="STU-2024-0847"></div>
+            <div class="form-g"><label class="form-lbl">Programme</label>
+              <select class="form-sel" id="dp-prog"><option>Computer Science</option><option>Business Administration</option><option>Data Science</option><option>Healthcare Management</option><option>Engineering</option><option>Law</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-g"><label class="form-lbl">GPA (0.0–4.0)</label><input class="form-inp" id="dp-gpa" type="number" step="0.1" min="0" max="4" value="2.1"></div>
+            <div class="form-g"><label class="form-lbl">Attendance %</label><input class="form-inp" id="dp-att" type="number" min="0" max="100" value="58"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-g"><label class="form-lbl">LMS Logins / Week</label><input class="form-inp" id="dp-logins" type="number" value="2"></div>
+            <div class="form-g"><label class="form-lbl">Assignments Missed</label><input class="form-inp" id="dp-missed" type="number" value="5"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-g"><label class="form-lbl">Financial Aid Status</label>
+              <select class="form-sel" id="dp-fin"><option>Partial Aid</option><option>Full Aid</option><option>No Aid</option><option>Scholarship</option></select>
+            </div>
+            <div class="form-g"><label class="form-lbl">Forum Participation</label>
+              <select class="form-sel" id="dp-forum"><option>Low</option><option>Medium</option><option>High</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-g"><label class="form-lbl">Semester</label><input class="form-inp" id="dp-sem" type="number" min="1" max="8" value="2"></div>
+            <div class="form-g"><label class="form-lbl">Previous Dropout Attempt</label>
+              <select class="form-sel" id="dp-prev"><option>No</option><option>Yes — returned</option><option>First-gen student</option></select>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;" onclick="runDropout()">✦ Run AI Dropout Analysis</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">AI Prediction Result</div></div>
+        <div class="panel-body" id="dp-result" style="min-height:350px;">
+          <div class="loading" style="flex-direction:column;gap:12px;color:var(--text3);">
+            <div style="font-size:32px">▲</div>
+            <div>Enter student data and run analysis</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel g-full">
+      <div class="panel-head"><div class="panel-title">Cohort Risk Timeline Forecast</div><div class="panel-sub">Predicted dropout probability week-by-week for current semester</div></div>
+      <div class="panel-body"><div class="chart-wrap" style="height:210px;"><canvas id="riskTimeline"></canvas></div></div>
+    </div>
+  `;
+  setTimeout(initRiskTimeline, 80);
+}
+
+function initRiskTimeline() {
+  const weeks = Array.from({length:16},(_,i)=>`Wk ${i+1}`);
+  charts.riskTime = new Chart(document.getElementById('riskTimeline'),{
+    type:'line',
+    data:{labels:weeks,datasets:[
+      {label:'High Risk',data:[22,24,23,26,28,31,29,33,35,37,34,38,40,42,39,44],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,0.07)',tension:0.4,fill:true,borderWidth:2,pointRadius:3},
+      {label:'Medium Risk',data:[31,30,32,31,29,28,30,27,26,25,27,24,23,22,24,21],borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.07)',tension:0.4,fill:true,borderWidth:2,pointRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#4a5168',font:{size:11},boxWidth:12,padding:16}}},scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#8a90a8',font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#8a90a8',font:{size:10},callback:v=>v+'%'},max:60}}}
+  });
+}
+
+async function runDropout() {
+  const result = document.getElementById('dp-result');
+  result.innerHTML = `<div class="loading"><div class="spinner"></div> AI analysing 14 risk signals...</div>`;
+
+  const d = {
+    id: document.getElementById('dp-id').value,
+    prog: document.getElementById('dp-prog').value,
+    gpa: document.getElementById('dp-gpa').value,
+    att: document.getElementById('dp-att').value,
+    logins: document.getElementById('dp-logins').value,
+    missed: document.getElementById('dp-missed').value,
+    fin: document.getElementById('dp-fin').value,
+    forum: document.getElementById('dp-forum').value,
+    sem: document.getElementById('dp-sem').value,
+    prev: document.getElementById('dp-prev').value
+  };
+
+  const prompt = `You are an AI system analyzing student dropout risk in online higher education.
+
+Student Data:
+- ID: ${d.id} | Programme: ${d.prog} | Semester: ${d.sem}
+- GPA: ${d.gpa}/4.0 | Attendance: ${d.att}%
+- LMS Logins/week: ${d.logins} | Assignments missed: ${d.missed}
+- Financial aid: ${d.fin} | Forum participation: ${d.forum}
+- Previous dropout history: ${d.prev}
+
+Respond in this exact format:
+RISK_SCORE: [number 0-100]
+RISK_LEVEL: [Low/Medium/High/Critical]
+TOP_FACTORS:
+1. [factor]
+2. [factor]
+3. [factor]
+INTERVENTIONS:
+1. [specific action]
+2. [specific action]
+3. [specific action]
+PREDICTION: [One sentence prediction for next 30 days if no intervention]
+URGENCY: [Immediate/Within 2 weeks/Monitor monthly]`;
+
+  try {
+    const res = await callClaude(prompt);
+    const score = parseInt(res.match(/RISK_SCORE:\s*(\d+)/)?.[1] || '65');
+    const level = res.match(/RISK_LEVEL:\s*(\w+)/)?.[1] || 'High';
+    const color = score > 70 ? '#ef4444' : score > 45 ? '#f59e0b' : '#00b86b';
+    const badgeClass = score > 70 ? 'badge-red' : score > 45 ? 'badge-amber' : 'badge-green';
+
+    result.innerHTML = `
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-family:var(--serif);font-size:64px;color:${color};line-height:1">${score}</div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Dropout Risk Score</div>
+        <span class="badge ${badgeClass}" style="font-size:12px;padding:4px 14px">${level.toUpperCase()} RISK</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;background:var(--surface2);padding:14px;border-radius:10px;border:1px solid var(--border);">
+        ${res.replace(/RISK_SCORE:.*\n?/,'').replace(/RISK_LEVEL:.*\n?/,'').replace(/\n/g,'<br>').replace(/TOP_FACTORS:/g,'<strong style="color:var(--text)">Top Risk Factors:</strong>').replace(/INTERVENTIONS:/g,'<br><strong style="color:var(--text)">Recommended Interventions:</strong>').replace(/PREDICTION:/g,'<br><strong style="color:var(--text)">30-Day Prediction:</strong>').replace(/URGENCY:/g,'<strong style="color:var(--text)">Urgency:</strong>')}
+      </div>
+    `;
+  } catch(e) {
+    result.innerHTML = `<div style="color:var(--red);font-size:13px;padding:20px">API error: ${e.message}</div>`;
+  }
+}
+
+// ── TRUST ──────────────────────────────────────────────
+function renderTrust() {
+  document.getElementById('content').innerHTML = `
+    <div class="score-grid">
+      <div class="score-card"><div class="sc-top-bar" style="background:var(--accent)"></div><div class="sc-label">Programme Credibility</div><div class="sc-value">91.2</div><div class="sc-note">CS & Engineering</div></div>
+      <div class="score-card"><div class="sc-top-bar" style="background:var(--green)"></div><div class="sc-label">Assessment Integrity</div><div class="sc-value">88.3</div><div class="sc-note">Zero anomalies this cycle</div></div>
+      <div class="score-card"><div class="sc-top-bar" style="background:var(--amber)"></div><div class="sc-label">Faculty Trust Score</div><div class="sc-value">79.2</div><div class="sc-note">2 flags pending review</div></div>
+      <div class="score-card"><div class="sc-top-bar" style="background:#8b5cf6"></div><div class="sc-label">Inst. Transparency</div><div class="sc-value">77.4</div><div class="sc-note">Disclosure index</div></div>
+    </div>
+    <div class="g-2">
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">Programme Trust Evaluator</div><div class="panel-sub">AI-generated credibility score for any programme</div></div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-g"><label class="form-lbl">Institution</label><input class="form-inp" id="tr-inst" value="${user?.institution||'State University Online'}"></div>
+            <div class="form-g"><label class="form-lbl">Programme Name</label><input class="form-inp" id="tr-prog" value="MBA — Digital Transformation"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-g"><label class="form-lbl">Accreditation</label>
+              <select class="form-sel" id="tr-acc"><option>National — Tier 1</option><option>National — Tier 2</option><option>Regional</option><option>Unaccredited</option></select>
+            </div>
+            <div class="form-g"><label class="form-lbl">Graduate Employment %</label><input class="form-inp" id="tr-emp" type="number" value="78"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-g"><label class="form-lbl">Completion Rate %</label><input class="form-inp" id="tr-comp" type="number" value="82"></div>
+            <div class="form-g"><label class="form-lbl">Misconduct Cases (yr)</label><input class="form-inp" id="tr-misc" type="number" value="3"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-g"><label class="form-lbl">Student Satisfaction (1–10)</label><input class="form-inp" id="tr-sat" type="number" min="1" max="10" value="7.4"></div>
+            <div class="form-g"><label class="form-lbl">External Audit Result</label>
+              <select class="form-sel" id="tr-audit"><option>Commendation</option><option>Satisfactory</option><option>Requires Improvement</option><option>Not Audited</option></select>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;" onclick="computeTrust()">◇ Compute Trust &amp; Credibility Score</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Credibility Score Output</div></div>
+        <div class="panel-body" id="tr-result" style="min-height:360px;">
+          <div class="loading" style="flex-direction:column;gap:12px;color:var(--text3);">
+            <div style="font-size:32px">◇</div>
+            <div>Fill in programme details to compute</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel g-full">
+      <div class="panel-head"><div class="panel-title">Institution Trust Score History</div><div class="panel-sub">Quarterly credibility tracking</div></div>
+      <div class="panel-body"><div class="chart-wrap" style="height:180px;"><canvas id="trustHistChart"></canvas></div></div>
+    </div>
+  `;
+  setTimeout(() => {
+    charts.trustHist = new Chart(document.getElementById('trustHistChart'),{
+      type:'line',
+      data:{labels:['Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],
+        datasets:[{data:[78.2,79.1,77.8,80.4,81.2,82.8,83.1,84.2,84.7],borderColor:'#d4a853',backgroundColor:'rgba(212,168,83,0.08)',tension:0.4,fill:true,pointRadius:4,borderWidth:2.5}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#8a90a8',font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#8a90a8',font:{size:10}},min:70,max:95}}}
+    });
+  }, 80);
+}
+
+async function computeTrust() {
+  const result = document.getElementById('tr-result');
+  result.innerHTML = `<div class="loading"><div class="spinner"></div> Computing credibility score...</div>`;
+
+  const d = {
+    inst: document.getElementById('tr-inst').value,
+    prog: document.getElementById('tr-prog').value,
+    acc: document.getElementById('tr-acc').value,
+    emp: document.getElementById('tr-emp').value,
+    comp: document.getElementById('tr-comp').value,
+    misc: document.getElementById('tr-misc').value,
+    sat: document.getElementById('tr-sat').value,
+    audit: document.getElementById('tr-audit').value
+  };
+
+  const prompt = `You are the EduTrust Trust Evaluation Module. Evaluate the credibility and trust score for this programme:
+
+Institution: ${d.inst}
+Programme: ${d.prog}
+Accreditation: ${d.acc}
+Graduate Employment Rate: ${d.emp}%
+Completion Rate: ${d.comp}%
+Academic Misconduct Cases this year: ${d.misc}
+Student Satisfaction Score: ${d.sat}/10
+External Audit Result: ${d.audit}
+
+Respond in this exact format:
+CREDIBILITY_SCORE: [0-100]
+TRUST_GRADE: [A+/A/B+/B/C/D/F]
+DATA_INTEGRITY: [0-100]
+ASSESSMENT_VALIDITY: [0-100]
+FACULTY_CREDIBILITY: [0-100]
+TRANSPARENCY: [0-100]
+STRENGTHS:
+- [strength 1]
+- [strength 2]
+RED_FLAGS:
+- [flag or "None identified"]
+RECOMMENDATIONS:
+1. [recommendation]
+2. [recommendation]
+3. [recommendation]
+BENCHMARK: [comparison to sector average in one sentence]`;
+
+  try {
+    const res = await callClaude(prompt);
+    const score = parseInt(res.match(/CREDIBILITY_SCORE:\s*(\d+)/)?.[1] || '81');
+    const grade = res.match(/TRUST_GRADE:\s*([A-F+]+)/)?.[1] || 'B+';
+    const color = score >= 80 ? '#00b86b' : score >= 60 ? '#f59e0b' : '#ef4444';
+
+    result.innerHTML = `
+      <div style="text-align:center;margin-bottom:20px;">
+        <div class="cred-big">${score}</div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Credibility Score</div>
+        <span class="badge" style="background:${color}20;color:${color};font-size:14px;padding:5px 16px">Grade ${grade}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;background:var(--surface2);padding:14px;border-radius:10px;border:1px solid var(--border);">
+        ${res.replace(/CREDIBILITY_SCORE:.*\n?/,'').replace(/TRUST_GRADE:.*\n?/,'')
+          .replace(/DATA_INTEGRITY:/g,'<strong style="color:var(--text)">Data Integrity:</strong>')
+          .replace(/ASSESSMENT_VALIDITY:/g,'<strong style="color:var(--text)">Assessment Validity:</strong>')
+          .replace(/FACULTY_CREDIBILITY:/g,'<strong style="color:var(--text)">Faculty Credibility:</strong>')
+          .replace(/TRANSPARENCY:/g,'<strong style="color:var(--text)">Transparency:</strong>')
+          .replace(/STRENGTHS:/g,'<br><strong style="color:var(--text)">Strengths:</strong>')
+          .replace(/RED_FLAGS:/g,'<br><strong style="color:var(--text)">Red Flags:</strong>')
+          .replace(/RECOMMENDATIONS:/g,'<br><strong style="color:var(--text)">Recommendations:</strong>')
+          .replace(/BENCHMARK:/g,'<br><strong style="color:var(--text)">Benchmark:</strong>')
+          .replace(/\n/g,'<br>')}
+      </div>
+    `;
+  } catch(e) {
+    result.innerHTML = `<div style="color:var(--red);font-size:13px">API error: ${e.message}</div>`;
+  }
+}
+
+// ── AI ANALYSIS ────────────────────────────────────────
+function renderAI() {
+  document.getElementById('content').innerHTML = `
+    <div class="g-2">
+      <div class="panel" style="grid-column:span 2">
+        <div class="panel-head">
+          <div><div class="panel-title">✦ EduTrust AI Analysis Engine</div><div class="panel-sub">Powered by Claude — ask anything about student outcomes, trust, dropout risk, anomalies</div></div>
+          <button class="btn btn-sm" onclick="clearAI()">Clear Chat</button>
+        </div>
+        <div class="ai-wrap">
+          <div class="ai-msgs" id="ai-messages">
+            <div class="msg">
+              <div class="msg-av ai">AI</div>
+              <div class="msg-bub ai">Hello! I am the <strong>EduTrust AI Analysis Engine</strong>, powered by Claude. I have context about your institution's ${students.length} enrolled students, outcome scores, dropout risks, and trust metrics.<br><br>Try: <em>"Which students need immediate intervention?"</em> or <em>"How can we improve our trust score to above 90?"</em> or <em>"Analyse the dropout pattern in Computer Science."</em></div>
+            </div>
+          </div>
+          <div class="ai-input-row">
+            <input class="ai-input" id="ai-input" placeholder="Ask about outcomes, trust, dropout, anomalies, interventions..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){sendAI();event.preventDefault()}">
+            <button class="btn btn-primary" onclick="sendAI()">Send ↗</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="g-2">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Quick Analysis Prompts</div></div>
+        <div class="panel-body quick-btns">
+          <button class="btn" onclick="qp('Identify the top 5 dropout risk factors across our current student cohort and rank them by impact')">📊 Dropout risk factor analysis ↗</button>
+          <button class="btn" onclick="qp('What specific actions would most improve our institutional trust score from 84.7 to above 90?')">◇ Trust improvement roadmap ↗</button>
+          <button class="btn" onclick="qp('Generate a comprehensive outcome summary report for all 10 students this semester')">📋 Semester outcome report ↗</button>
+          <button class="btn" onclick="qp('Analyse the anomalies detected this week and recommend automated responses for each')">⚠ Anomaly analysis & response ↗</button>
+          <button class="btn" onclick="qp('Compare dropout rates across programmes and identify which programme needs structural intervention')">▲ Cross-programme comparison ↗</button>
+          <button class="btn" onclick="qp('Predict our institutional outcome score for the next 6 months if current trends continue')">🔮 6-month outcome forecast ↗</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">System Architecture (Patent Claims)</div></div>
+        <div class="panel-body">
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;">
+            ${[
+              ['📥','Data Acquisition Layer','LMS, SIS, Exam, Portal APIs (Claim 2)','var(--surface2)','var(--border)'],
+              ['⚙️','Processing Engine','ETL, normalisation, feature extraction (Claim 1)','var(--surface2)','var(--border)'],
+              ['✦','AI Module (Claude)','Prediction, NLP, trend analysis (Claims 3,9)','var(--accentLight)','rgba(26,86,255,0.2)'],
+              ['◐','Scoring Engine','Composite outcome scores (Claims 4,10)','var(--surface2)','var(--border)'],
+              ['◇','Trust Module','Credibility, anomaly detection (Claims 5,7)','var(--surface2)','var(--border)'],
+              ['📤','Output Interface','Dashboards, APIs, alerts (Claim 8)','var(--surface2)','var(--border)'],
+            ].map(([icon,name,desc,bg,border])=>`
+              <div style="display:flex;align-items:center;gap:10px;padding:9px;background:${bg};border-radius:8px;border:1px solid ${border};">
+                <span style="font-size:15px">${icon}</span>
+                <div>
+                  <div style="font-weight:600;color:var(--text)">${name}</div>
+                  <div style="font-size:11px;color:var(--text3)">${desc}</div>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function sendAI() {
+  const input = document.getElementById('ai-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  appendMsg('user', msg);
+  const typId = appendTyping();
+
+  const context = `You are the EduTrust AI Analysis Engine for ${user?.institution||'the university'}.
+
+Current system data:
+- Total students: ${students.length}
+- High risk students: ${students.filter(s=>s.risk==='High').length} (${students.filter(s=>s.risk==='High').map(s=>s.name).join(', ')})
+- Average outcome score: ${(students.reduce((a,s)=>a+s.score,0)/students.length).toFixed(1)}
+- Overall trust score: 84.7
+- Credibility index: 91.2
+- Active anomalies: 3
+- Dropout risk: 12.6%
+
+Student records: ${JSON.stringify(students.map(s=>({id:s.id,name:s.name,prog:s.prog,gpa:s.gpa,att:s.att,score:s.score,risk:s.risk})))}
+
+Be specific, data-driven, and actionable. Reference actual student IDs and names where relevant.`;
+
+  try {
+    chatHistory.push({role:'user',content:msg});
+    const response = await callClaudeWithHistory(context, chatHistory);
+    chatHistory.push({role:'assistant',content:response});
+    removeEl(typId);
+    appendMsg('ai', response);
+  } catch(e) {
+    removeEl(typId);
+    appendMsg('ai', `Connection error: ${e.message}. Please ensure API access is configured.`);
+  }
+}
+
+function qp(text) {
+  document.getElementById('ai-input').value = text;
+  sendAI();
+}
+
+function clearAI() {
+  chatHistory = [];
+  document.getElementById('ai-messages').innerHTML = '';
+  appendMsg('ai','Chat cleared. How can I help you analyse your education outcomes?');
+}
+
+function appendMsg(role, text) {
+  const c = document.getElementById('ai-messages');
+  if (!c) return;
+  const d = document.createElement('div');
+  d.className='msg';
+  d.innerHTML=`<div class="msg-av ${role}">${role==='ai'?'AI':'U'}</div><div class="msg-bub ${role}">${text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>')}</div>`;
+  c.appendChild(d);
+  c.scrollTop=c.scrollHeight;
+}
+function appendTyping() {
+  const c = document.getElementById('ai-messages');
+  if (!c) return null;
+  const id='typ-'+Date.now();
+  const d=document.createElement('div');d.className='msg';d.id=id;
+  d.innerHTML=`<div class="msg-av ai">AI</div><div class="msg-bub ai"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  c.appendChild(d);c.scrollTop=c.scrollHeight;return id;
+}
+function removeEl(id) { const e=document.getElementById(id);if(e)e.remove(); }
+
+// ── ANOMALY ────────────────────────────────────────────
+function renderAnomaly() {
+  document.getElementById('anom-badge').textContent = '3';
+  document.getElementById('content').innerHTML = `
+    <div class="g-2" style="margin-bottom:14px;">
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">Live Anomaly Feed</div><div class="panel-sub">Real-time AI-monitored irregularities</div></div><span class="badge badge-red">3 Active</span></div>
+        <div class="panel-body" id="anom-feed">
+          ${anomalies.map(a=>`
+            <div class="anom-item">
+              <div class="anom-icon ${a.type}">${a.icon}</div>
+              <div class="anom-body">
+                <strong>${a.title}</strong>${a.desc}
+                <div class="anom-time">${a.time}</div>
+              </div>
+              <button class="btn btn-sm" onclick="investigateAnomaly('${a.title}')">Review ↗</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Anomaly Type Distribution</div></div>
+        <div class="panel-body">
+          <div class="chart-wrap" style="height:200px;"><canvas id="anomChart"></canvas></div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;">
+            ${[['Grade Anomalies','8','#ef4444'],['Plagiarism','12','#f59e0b'],['Identity Issues','5','#8b5cf6'],['Timing Irregularities','9','#1a56ff'],['Engagement Fraud','6','#00b86b']].map(([l,v,c])=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${c};display:inline-block"></span>${l}</span>
+              <span style="font-family:var(--mono);color:var(--accent)">${v} detected</span>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel g-full">
+      <div class="panel-head"><div><div class="panel-title">AI Anomaly Deep Scan</div><div class="panel-sub">Run comprehensive AI analysis across all data sources</div></div></div>
+      <div class="panel-body">
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;">
+          ${[['Grade pattern anomalies',true],['Engagement fraud',true],['Identity verification gaps',true],['Assessment timing',false],['Credential authenticity',false],['Submission similarity',true]].map(([l,c])=>`
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;">
+            <input type="checkbox" ${c?'checked':''} style="accent-color:var(--accent)"> ${l}
+          </label>`).join('')}
+        </div>
+        <button class="btn btn-danger" onclick="runAnomalyScan()">⚠ Run Full AI Anomaly Scan</button>
+        <div id="anom-scan-result"></div>
+      </div>
+    </div>
+  `;
+  setTimeout(() => {
+    charts.anom = new Chart(document.getElementById('anomChart'),{
+      type:'doughnut',
+      data:{labels:['Grade','Plagiarism','Identity','Timing','Fraud'],datasets:[{data:[8,12,5,9,6],backgroundColor:['#ef4444','#f59e0b','#8b5cf6','#1a56ff','#00b86b'],borderWidth:2,borderColor:'#fff',hoverOffset:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}
+    });
+  }, 80);
+}
+
+async function investigateAnomaly(title) {
+  navigate('ai', document.querySelector('.s-item:nth-child(6)'));
+  setTimeout(() => {
+    document.getElementById('ai-input').value = `Provide a detailed investigation report for the anomaly: "${title}". Include severity assessment, recommended immediate actions, and whether this should trigger a formal academic misconduct review.`;
+    sendAI();
+  }, 200);
+}
+
+async function runAnomalyScan() {
+  const result = document.getElementById('anom-scan-result');
+  result.innerHTML = `<div class="loading" style="margin-top:14px;"><div class="spinner"></div> Running AI anomaly scan across all data sources...</div>`;
+
+  const prompt = `You are the EduTrust Anomaly Detection Module. Perform a comprehensive anomaly scan for an online university with 2,400 enrolled students.
+
+Current data signals:
+- 3 cases of grade spikes (>40% single-exam improvement, no engagement change)
+- 12 submissions with >90% code/text similarity
+- 5 IP geolocation mismatches during live assessments
+- 8 students below 70% biometric confidence threshold
+- 4 students completed 2-hour exam in under 20 minutes
+- 2 students showing zero LMS activity for 3+ weeks while still enrolled
+
+Provide:
+1. OVERALL_SEVERITY: [Low/Medium/High/Critical]
+2. IMMEDIATE_ACTIONS: List 3 actions to take today
+3. AUTOMATED_RESPONSES: What the system should auto-trigger
+4. TRUST_IMPACT: How much this affects the trust score (−X points)
+5. INVESTIGATION_PRIORITY: Rank the anomaly types by urgency
+6. PREVENTION: 2 systemic changes to reduce future anomalies`;
+
+  try {
+    const res = await callClaude(prompt);
+    result.innerHTML = `
+      <div class="result-box danger" style="margin-top:14px;">
+        <div style="font-weight:600;color:var(--red);margin-bottom:10px;font-size:13px">⚠ AI ANOMALY SCAN COMPLETE — ${new Date().toLocaleTimeString()}</div>
+        ${res.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}
+      </div>
+    `;
+  } catch(e) {
+    result.innerHTML = `<div style="color:var(--red);margin-top:12px">API error: ${e.message}</div>`;
+  }
+}
+
+// ── SCORING ────────────────────────────────────────────
+function renderScoring() {
+  document.getElementById('content').innerHTML = `
+    <div class="g-2" style="margin-bottom:14px;">
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">Scoring Engine Configuration</div><div class="panel-sub">Adjust dimension weights — scores recompute in real-time</div></div></div>
+        <div class="panel-body">
+          <div id="weight-dims"></div>
+          <div style="padding-top:14px;border-top:1px solid var(--border);margin-top:6px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;font-weight:500;">
+              <span style="color:var(--text2)">Computed Outcome Score</span>
+              <span style="font-family:var(--mono);color:var(--accent);font-size:16px;" id="comp-score">78.4</span>
+            </div>
+            <div class="prog-bar" style="height:8px;"><div class="prog-fill" id="comp-prog" style="width:78.4%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;margin-top:16px;" onclick="runScoringAI()">◐ Generate AI Scoring Report</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">AI Scoring Report</div></div>
+        <div class="panel-body" id="score-result" style="min-height:350px;">
+          <div class="loading" style="flex-direction:column;gap:12px;color:var(--text3);"><div style="font-size:32px">◐</div><div>Adjust weights and generate report</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel g-full">
+      <div class="panel-head"><div class="panel-title">Multi-Dimensional Score Map</div><div class="panel-sub">Visual breakdown of all outcome dimensions</div></div>
+      <div class="panel-body"><div class="chart-wrap" style="height:220px;"><canvas id="scoreMapChart"></canvas></div></div>
+    </div>
+  `;
+  renderWeightDims();
+  setTimeout(initScoreChart, 80);
+}
+
+function renderWeightDims() {
+  const c = document.getElementById('weight-dims');
+  if (!c) return;
+  c.innerHTML = dimensions.map((d,i)=>`
+    <div class="weight-dim">
+      <div class="weight-dim-head">
+        <span class="weight-dim-name">${d.name}</span>
+        <span class="weight-dim-val" id="wv-${i}">Weight: ${d.weight}% · Score: ${d.value}</span>
+      </div>
+      <input type="range" min="5" max="50" value="${d.weight}" step="1" style="width:100%;accent-color:${d.color}" oninput="updateDimWeight(${i},this.value)">
+    </div>
+  `).join('');
+}
+
+function updateDimWeight(idx, val) {
+  dimensions[idx].weight = parseInt(val);
+  document.getElementById(`wv-${idx}`).textContent = `Weight: ${val}% · Score: ${dimensions[idx].value}`;
+  const total = dimensions.reduce((s,d)=>s+d.weight,0);
+  const score = (dimensions.reduce((s,d)=>s+(d.value*d.weight/total),0)).toFixed(1);
+  document.getElementById('comp-score').textContent = score;
+  document.getElementById('comp-prog').style.width = score+'%';
+}
+
+function initScoreChart() {
+  charts.scoreMap = new Chart(document.getElementById('scoreMapChart'),{
+    type:'bar',
+    data:{
+      labels:dimensions.map(d=>d.name),
+      datasets:[
+        {label:'Dimension Score',data:dimensions.map(d=>d.value),backgroundColor:dimensions.map(d=>d.color),borderRadius:5,borderWidth:0},
+        {label:'Weight (×2)',data:dimensions.map(d=>d.weight*2),backgroundColor:dimensions.map(d=>d.color+'30'),borderRadius:5,borderWidth:1,borderColor:dimensions.map(d=>d.color)}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#4a5168',font:{size:11},boxWidth:12,padding:16}}},scales:{x:{grid:{display:false},ticks:{color:'#8a90a8',font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#8a90a8',font:{size:10}},max:110}}}
+  });
+}
+
+async function runScoringAI() {
+  const result = document.getElementById('score-result');
+  result.innerHTML = `<div class="loading"><div class="spinner"></div> AI generating scoring report...</div>`;
+  const total = dimensions.reduce((s,d)=>s+d.weight,0);
+  const score = (dimensions.reduce((s,d)=>s+(d.value*d.weight/total),0)).toFixed(1);
+
+  const prompt = `You are the EduTrust Scoring Engine. Generate a scoring report for this online university programme.
+
+Dimension Scores and Weights:
+${dimensions.map(d=>`- ${d.name}: Score ${d.value}/100, Weight ${d.weight}%`).join('\n')}
+Computed Composite Outcome Score: ${score}/100
+Total students: ${students.length}
+
+Provide:
+1. INTERPRETATION: What the ${score} score means
+2. WEAKEST_DIMENSION: Name it and give 3 specific improvements
+3. STRONGEST_DIMENSION: Name it and how to leverage it
+4. WEIGHT_RECOMMENDATION: Should any weight be rebalanced? Why?
+5. SIX_MONTH_FORECAST: Predicted score if recommendations followed
+6. SECTOR_BENCHMARK: How does ${score} compare to average UK/US online HE sector (typically 72-78)?
+7. ACCREDITATION_READINESS: Is this score sufficient for major accreditation bodies?`;
+
+  try {
+    const res = await callClaude(prompt);
+    result.innerHTML = `
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+        ${res.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--text)">$1</strong>')
+          .replace(/(INTERPRETATION|WEAKEST_DIMENSION|STRONGEST_DIMENSION|WEIGHT_RECOMMENDATION|SIX_MONTH_FORECAST|SECTOR_BENCHMARK|ACCREDITATION_READINESS):/g,'<br><strong style="color:var(--accent)">$1:</strong>')}
+      </div>
+    `;
+  } catch(e) {
+    result.innerHTML = `<div style="color:var(--red)">API error: ${e.message}</div>`;
+  }
+}
+
+// ── REPORTS ────────────────────────────────────────────
+function renderReports() {
+  document.getElementById('content').innerHTML = `
+    <div class="g-2" style="margin-bottom:14px;">
+      ${[
+        {title:'Semester Outcome Report',desc:'Comprehensive outcome scores for all students',icon:'📊',btn:'Generate Report'},
+        {title:'Accreditation Pack',desc:'QAA/NAAC ready compliance documentation',icon:'🏛',btn:'Build Pack'},
+        {title:'Dropout Risk Summary',desc:'At-risk student cohort analysis for leadership',icon:'▲',btn:'Generate'},
+        {title:'Trust & Credibility Report',desc:'Institution-wide trust score with recommendations',icon:'◇',btn:'Generate'},
+        {title:'Anomaly Incident Log',desc:'All detected irregularities with severity classification',icon:'⚠',btn:'Export Log'},
+        {title:'Executive Dashboard PDF',desc:'One-page summary for board/senior leadership',icon:'📋',btn:'Generate PDF'},
+      ].map(r=>`
+        <div class="panel">
+          <div class="panel-body" style="display:flex;align-items:center;gap:14px;">
+            <div style="font-size:28px;width:44px;text-align:center">${r.icon}</div>
+            <div style="flex:1">
+              <div style="font-weight:600;color:var(--text);margin-bottom:4px">${r.title}</div>
+              <div style="font-size:12px;color:var(--text3)">${r.desc}</div>
+            </div>
+            <button class="btn btn-sm btn-primary" onclick="genReport('${r.title}')">${r.btn} ↗</button>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="panel g-full">
+      <div class="panel-head"><div class="panel-title">Generated Report Preview</div></div>
+      <div class="panel-body" id="report-preview">
+        <div class="loading" style="flex-direction:column;gap:12px;color:var(--text3);"><div style="font-size:32px">📋</div><div>Select a report type to generate</div></div>
+      </div>
+    </div>
+  `;
+}
+
+async function genReport(type) {
+  const result = document.getElementById('report-preview');
+  result.innerHTML = `<div class="loading"><div class="spinner"></div> AI generating ${type}...</div>`;
+
+  const prompt = `You are the EduTrust reporting engine for ${user?.institution||'State University Online'}.
+
+Generate a professional ${type} with the following real data:
+- Institution: ${user?.institution||'State University Online'}
+- Total enrolled students: ${students.length}
+- High risk students: ${students.filter(s=>s.risk==='High').length}
+- Average outcome score: ${(students.reduce((a,s)=>a+s.score,0)/students.length).toFixed(1)}
+- Trust score: 84.7 | Credibility: 91.2 | Dropout risk: 12.6%
+- Active anomalies: 3
+
+Format as a professional report with: Executive Summary, Key Findings (bullet points), Data Analysis, Recommendations, and Conclusion. Use specific numbers and student data. Make it suitable for ${type.includes('Executive')?'board level':'accreditation body'} review. Date: ${new Date().toLocaleDateString()}`;
+
+  try {
+    const res = await callClaude(prompt);
+    result.innerHTML = `
+      <div style="max-width:700px;margin:0 auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--accent)">
+          <div>
+            <div style="font-family:var(--serif);font-size:22px;color:var(--text)">${type}</div>
+            <div style="font-size:12px;color:var(--text3)">${user?.institution||'University'} · Generated ${new Date().toLocaleDateString()} by EduTrust AI</div>
+          </div>
+          <span class="badge badge-blue">DRAFT</span>
+        </div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.9;">
+          ${res.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--text)">$1</strong>').replace(/#{1,3} (.*)/g,'<br><strong style="color:var(--text);font-size:14px">$1</strong><br>')}
+        </div>
+      </div>
+    `;
+    notify(`${type} generated successfully`);
+  } catch(e) {
+    result.innerHTML = `<div style="color:var(--red)">Error: ${e.message}</div>`;
+  }
+}
+
+// ── SETTINGS ───────────────────────────────────────────
+function renderSettings() {
+  document.getElementById('content').innerHTML = `
+    <div class="g-2" style="margin-bottom:14px;">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Institution Profile</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-g"><label class="form-lbl">Institution Name</label><input class="form-inp" value="${user?.institution||''}"></div>
+            <div class="form-g"><label class="form-lbl">Your Role</label><input class="form-inp" value="${user?.role||''}" readonly></div>
+          </div>
+          <div class="form-g" style="margin-bottom:12px"><label class="form-lbl">Admin Email</label><input class="form-inp" value="${user?.email||''}"></div>
+          <div class="form-g" style="margin-bottom:16px"><label class="form-lbl">Country / Regulatory Context</label>
+            <select class="form-sel"><option>India (UGC)</option><option>United Kingdom (QAA)</option><option>United States (SACSCOC)</option><option>Australia (TEQSA)</option></select>
+          </div>
+          <button class="btn btn-primary" onclick="notify('Settings saved ✓')">Save Profile</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Data Source Connections</div></div>
+        <div class="panel-body">
+          ${[['Moodle LMS','Connected','green'],['Canvas LMS','Not configured','red'],['Banner SIS','Connected','green'],['Examination System','Connected','green'],['Financial Aid API','Connected','green'],['Engagement Analytics','Syncing...','amber']].map(([n,s,c])=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
+            <span style="color:var(--text2)">${n}</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="badge badge-${c}">${s}</span>
+              <button class="btn btn-sm" onclick="notify('Configuring ${n}...')">${s==='Connected'?'Manage':'Connect'}</button>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="g-2">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Alert Configuration</div></div>
+        <div class="panel-body">
+          ${[['High dropout risk detected (>70%)','Email + Dashboard',true],['New critical anomaly','Email + SMS',true],['Trust score drops >5 points','Dashboard',true],['Weekly outcome summary','Email',false],['Monthly credibility report','Email',true]].map(([e,m,on])=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px">
+            <div>
+              <div style="color:var(--text);font-weight:500">${e}</div>
+              <div style="color:var(--text3);font-size:11px">${m}</div>
+            </div>
+            <label style="cursor:pointer;display:flex;align-items:center;gap:6px">
+              <input type="checkbox" ${on?'checked':''} style="accent-color:var(--accent)">
+              <span style="color:var(--text3)">${on?'On':'Off'}</span>
+            </label>
+          </div>`).join('')}
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="notify('Alert settings saved ✓')">Save Alerts</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">AI Engine Settings</div></div>
+        <div class="panel-body">
+          <div class="form-g" style="margin-bottom:12px"><label class="form-lbl">AI Model</label>
+            <select class="form-sel"><option>Claude Sonnet (Recommended)</option><option>Claude Opus (Max accuracy)</option><option>Claude Haiku (Fast)</option></select>
+          </div>
+          <div class="form-g" style="margin-bottom:12px"><label class="form-lbl">Dropout Prediction Threshold</label>
+            <select class="form-sel"><option>Alert at 60% risk score</option><option>Alert at 70% risk score</option><option>Alert at 80% risk score</option></select>
+          </div>
+          <div class="form-g" style="margin-bottom:12px"><label class="form-lbl">Anomaly Sensitivity</label>
+            <select class="form-sel"><option>High (flag more, review more)</option><option>Medium (balanced)</option><option>Low (critical only)</option></select>
+          </div>
+          <div class="form-g" style="margin-bottom:16px"><label class="form-lbl">Score Update Frequency</label>
+            <select class="form-sel"><option>Real-time (live data)</option><option>Every 6 hours</option><option>Daily</option><option>Weekly</option></select>
+          </div>
+          <button class="btn btn-primary" onclick="notify('AI settings saved ✓')">Save AI Config</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ── CLAUDE API ─────────────────────────────────────────
+async function callClaude(prompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:CLAUDE,max_tokens:1000,
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const d = await res.json();
+  return d.content?.map(b=>b.text||'').join('') || 'No response.';
+}
+
+async function callClaudeWithHistory(system, history) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:CLAUDE,max_tokens:1000,
+      system,
+      messages:history
+    })
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const d = await res.json();
+  return d.content?.map(b=>b.text||'').join('') || 'No response.';
+}
+
+// ── UTILITIES ──────────────────────────────────────────
+function refreshData() {
+  notify('⟳ Refreshing all data sources...');
+  setTimeout(() => notify('✓ Data sources synced — all 6 active'), 1500);
+}
+
+async function generateReport() {
+  notify('Generating executive report...');
+  navigate('reports', null);
+  setTimeout(() => genReport('Executive Dashboard PDF'), 300);
+}
+</script>
+
+<!-- Copyright Footer -->
+<div style="position:fixed;bottom:0;left:240px;right:0;padding:6px 28px;background:rgba(248,249,252,0.95);border-top:1px solid rgba(0,0,0,0.06);font-size:10px;color:#8a90a8;display:flex;justify-content:space-between;align-items:center;z-index:50;backdrop-filter:blur(4px);">
+  <span>© 2026 Rahul Sharma. All rights reserved. Proprietary software.</span>
+  <span>EduTrust AI Platform · Confidential &amp; Restricted</span>
+</div>
+
+</body>
+</html>
